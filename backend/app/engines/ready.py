@@ -233,3 +233,7 @@ def evaluate(
     """Convenience function to evaluate customer readiness."""
     engine = ReadyEngine(config=config)
     return engine.evaluate(customer_id, config=config, cutoff_date=cutoff_date)
+
+
+evaluate_customer = evaluate
+

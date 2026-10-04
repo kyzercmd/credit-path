@@ -140,3 +140,14 @@ class TimingEngine:
             return "Days 25 to 30 of each month (just after your typical income days)."
         else:
             return "Days 1 to 5 of each month (just after your typical income days)."
+
+
+def generate_calendar_forecast(
+    customer_id: str,
+    config: Config | None = None,
+    cutoff_date: str = "2025-12-31",
+) -> CalendarResult:
+    """Convenience function to generate calendar forecast."""
+    engine = TimingEngine(config=config)
+    return engine.calendar(customer_id, config=config, cutoff_date=cutoff_date)
+

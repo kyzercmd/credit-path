@@ -73,11 +73,18 @@ class WeekForecast(BaseModel):
     reason: str
 
 
+class HeadsUpCard(BaseModel):
+    message: str
+    suggestion: str
+    week: str
+
+
 class CalendarResponse(BaseModel):
     customer_id: str
     weeks: list[WeekForecast]
     recommended_window: str
     avoid_weeks: list[str]
+    heads_up: HeadsUpCard | None = None
     meta: Meta
 
 
@@ -117,6 +124,7 @@ class ConsentResponse(BaseModel):
     customer_id: str
     action: str
     recorded: bool
+    meta: Meta | None = None
 
 
 class FunnelBucket(BaseModel):
@@ -161,6 +169,7 @@ class ConfigResponse(BaseModel):
     config: dict
     version: int
     timestamp: str
+    meta: Meta | None = None
 
 
 class KillSwitchRequest(BaseModel):
@@ -168,20 +177,36 @@ class KillSwitchRequest(BaseModel):
     kill_loan_check: bool
 
 
+class KillSwitchResponse(BaseModel):
+    message: str
+    kill_safe_range: bool
+    kill_loan_check: bool
+    meta: Meta
+
+
 class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
     model_version: str
     data_as_of: str
+    disclaimer: str = "Built on synthetic data. Guidance only, not a loan offer."
+    meta: Meta | None = None
 
 
-class HeadsUpCard(BaseModel):
-    message: str
-    suggestion: str
-    week: str
+class AuditEvent(BaseModel):
+    event_type: str
+    details: str
+    timestamp: str
+
+
+class AuditLogResponse(BaseModel):
+    events: list[AuditEvent]
+    meta: Meta
 
 
 class WhyExplanation(BaseModel):
     code: str
     explanation: str
     feature_value: str
+
+

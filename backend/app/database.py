@@ -43,8 +43,17 @@ def init_db() -> None:
             timestamp TEXT NOT NULL
         );
     """)
+    cnt = conn.execute("SELECT count(*) FROM config_versions").fetchone()[0]
+    if cnt == 0:
+        from app.config import get_config
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute(
+            "INSERT INTO config_versions (config_json, changed_by, timestamp) VALUES (?, ?, ?)",
+            (json.dumps(get_config().to_dict()), "system", now),
+        )
     conn.commit()
     conn.close()
+
 
 
 def log_audit(event_type: str, details: str) -> None:
@@ -109,3 +118,15 @@ def get_consent_status(customer_id: str) -> str | None:
     ).fetchone()
     conn.close()
     return row["action"] if row else None
+
+
+def get_latest_config_version() -> tuple[int, str]:
+    conn = get_db()
+    row = conn.execute(
+        "SELECT id, timestamp FROM config_versions ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    conn.close()
+    if row:
+        return int(row["id"]), str(row["timestamp"])
+    return 1, datetime.now(timezone.utc).isoformat()
+

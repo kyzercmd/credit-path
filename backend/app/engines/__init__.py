@@ -10,15 +10,17 @@ Modules:
 """
 
 from app.engines.reasons import ReasonCatalog, get_reason_text
-from app.engines.ready import ReadyEngine, ReadyResult, evaluate
+from app.engines.ready import ReadyEngine, ReadyResult, evaluate, evaluate_customer
 from app.engines.affordability import (
     AffordabilityEngine,
     SafeRangeResult,
     LoanCheckResult,
     calculate_amortization,
+    calculate_safe_range,
+    evaluate_loan_check,
 )
-from app.engines.timing import TimingEngine, CalendarResult
-from app.engines.recourse import RecourseEngine, PathStepResult
+from app.engines.timing import TimingEngine, CalendarResult, generate_calendar_forecast
+from app.engines.recourse import RecourseEngine, PathStepResult, compute_recourse_path
 
 __all__ = [
     "ReasonCatalog",
@@ -26,12 +28,18 @@ __all__ = [
     "ReadyEngine",
     "ReadyResult",
     "evaluate",
+    "evaluate_customer",
     "AffordabilityEngine",
     "SafeRangeResult",
     "LoanCheckResult",
     "calculate_amortization",
+    "calculate_safe_range",
+    "evaluate_loan_check",
     "TimingEngine",
     "CalendarResult",
+    "generate_calendar_forecast",
     "RecourseEngine",
     "PathStepResult",
+    "compute_recourse_path",
 ]
+

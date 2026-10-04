@@ -299,3 +299,32 @@ class AffordabilityEngine:
             )
 
         return None
+
+
+def calculate_safe_range(
+    customer_id: str,
+    config: Config | None = None,
+    cutoff_date: str = "2025-12-31",
+) -> SafeRangeResult:
+    """Convenience function to calculate safe repayment range."""
+    engine = AffordabilityEngine(config=config)
+    return engine.safe_range(customer_id, config=config, cutoff_date=cutoff_date)
+
+
+def evaluate_loan_check(
+    customer_id: str,
+    amount: float,
+    tenor_months: int,
+    config: Config | None = None,
+    cutoff_date: str = "2025-12-31",
+) -> LoanCheckResult:
+    """Convenience function to evaluate loan check."""
+    engine = AffordabilityEngine(config=config)
+    return engine.loan_check(
+        customer_id=customer_id,
+        amount=amount,
+        tenor_months=tenor_months,
+        config=config,
+        cutoff_date=cutoff_date,
+    )
+

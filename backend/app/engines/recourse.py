@@ -190,3 +190,14 @@ class RecourseEngine:
             missing_items=pydantic_steps,
             meta=meta,
         )
+
+
+def compute_recourse_path(
+    customer_id: str,
+    config: Config | None = None,
+    cutoff_date: str = "2025-12-31",
+) -> PathResponse:
+    """Convenience function to compute recourse path."""
+    engine = RecourseEngine(config=config)
+    return engine.path_response(customer_id, config=config, cutoff_date=cutoff_date)
+
