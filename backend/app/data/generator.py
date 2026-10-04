@@ -268,3 +268,9 @@ def generate_dataset(seed: int = 42, n_customers: int = 10000) -> dict[str, pd.D
         'bills': bills,
         'customer_attributes': customer_attributes
     }
+
+
+if __name__ == "__main__":
+    from app.data.__main__ import main
+    main()
+

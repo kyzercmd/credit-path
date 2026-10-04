@@ -12,6 +12,7 @@ and metadata JSON to `backend/trained_models/`.
 """
 from __future__ import annotations
 
+import argparse
 import datetime
 from pathlib import Path
 from typing import Any
@@ -215,5 +216,14 @@ def train_all(
     }
 
 
+def main() -> None:
+    """CLI entrypoint for model training."""
+    parser = argparse.ArgumentParser(description="CreditPath ML Model Training Pipeline")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--sample_customers", type=int, default=2000, help="Number of training customers")
+    args = parser.parse_args()
+    train_all(seed=args.seed, sample_customers=args.sample_customers)
+
+
 if __name__ == "__main__":
-    train_all()
+    main()
