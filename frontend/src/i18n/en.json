@@ -1,0 +1,18 @@
+{
+  "home": {
+    "title": "Home",
+    "ready": "Ready",
+    "not_yet": "Not yet ready",
+    "see_safely_repay": "See what I can safely repay",
+    "see_whats_missing": "See what's missing",
+    "checks": {
+      "history": "Enough history",
+      "regularity": "Regular income",
+      "balance": "Sufficient balance",
+      "bills": "Bills paid on time"
+    }
+  },
+  "footer": {
+    "disclaimer": "Built on synthetic data. Guidance only, not a loan offer."
+  }
+}

@@ -1,0 +1,184 @@
+"""Pydantic schemas for API requests and responses (B13)."""
+from __future__ import annotations
+from pydantic import BaseModel, Field
+
+
+class Meta(BaseModel):
+    model_version: str
+    data_as_of: str
+    disclaimer: str
+
+
+class CheckResult(BaseModel):
+    name: str
+    passed: bool
+    reason: str
+
+
+class StatusResponse(BaseModel):
+    customer_id: str
+    ready: bool
+    status_label: str
+    status_sentence: str
+    checks: list[CheckResult]
+    meta: Meta
+
+
+class SafeRangeResponse(BaseModel):
+    customer_id: str
+    monthly_low: float
+    monthly_high: float
+    stressed_low: float
+    stressed_high: float
+    basis_months: int
+    basis_sentence: str
+    meta: Meta
+
+
+class LoanCheckRequest(BaseModel):
+    amount: float = Field(gt=0)
+    tenor_months: int = Field(gt=0, le=36)
+
+
+class NearestComfortable(BaseModel):
+    amount: float
+    tenor_months: int
+    monthly_payment: float
+
+
+class LoanCheckResponse(BaseModel):
+    customer_id: str
+    amount: float
+    tenor_months: int
+    monthly_payment: float
+    total_repayment: float
+    surplus_share: float
+    verdict: str  # "Comfortable", "Tight", "Too much"
+    verdict_reason: str
+    stress_verdict: str
+    stress_reason: str
+    nearest_comfortable: NearestComfortable | None
+    meta: Meta
+
+
+class WeekForecast(BaseModel):
+    week_start: str
+    money_in: float
+    money_out: float
+    expected_balance: float
+    status: str  # "safe", "tight"
+    reason: str
+
+
+class CalendarResponse(BaseModel):
+    customer_id: str
+    weeks: list[WeekForecast]
+    recommended_window: str
+    avoid_weeks: list[str]
+    meta: Meta
+
+
+class PathStep(BaseModel):
+    item: str
+    action: str
+    estimated_weeks: int
+    reason: str
+
+
+class PathResponse(BaseModel):
+    customer_id: str
+    missing_items: list[PathStep]
+    meta: Meta
+
+
+class CheckHistory(BaseModel):
+    month: str
+    history_ok: bool
+    income_regular: bool
+    cushion_ok: bool
+
+
+class ProgressResponse(BaseModel):
+    customer_id: str
+    history: list[CheckHistory]
+    became_ready: str | None
+    current_values: dict
+    meta: Meta
+
+
+class ConsentRequest(BaseModel):
+    action: str  # "consent" or "opt-out"
+
+
+class ConsentResponse(BaseModel):
+    customer_id: str
+    action: str
+    recorded: bool
+
+
+class FunnelBucket(BaseModel):
+    label: str
+    count: int
+
+
+class AdminFunnelResponse(BaseModel):
+    total_customers: int
+    ready_count: int
+    not_yet_count: int
+    missing_checks: list[FunnelBucket]
+    meta: Meta
+
+
+class ForecastQualityResponse(BaseModel):
+    overall_mae: float
+    overall_wape: float
+    naive_mae: float
+    naive_wape: float
+    by_persona: dict[str, dict]
+    meta: Meta
+
+
+class FairnessGroup(BaseModel):
+    group: str
+    count: int
+    ready_rate: float | None
+    forecast_error: float | None
+    false_not_yet_rate: float | None
+
+
+class FairnessResponse(BaseModel):
+    by_gender: list[FairnessGroup]
+    by_region: list[FairnessGroup]
+    by_age_band: list[FairnessGroup]
+    mitigation: dict
+    meta: Meta
+
+
+class ConfigResponse(BaseModel):
+    config: dict
+    version: int
+    timestamp: str
+
+
+class KillSwitchRequest(BaseModel):
+    kill_safe_range: bool
+    kill_loan_check: bool
+
+
+class HealthResponse(BaseModel):
+    status: str
+    model_loaded: bool
+    model_version: str
+    data_as_of: str
+
+
+class HeadsUpCard(BaseModel):
+    message: str
+    suggestion: str
+    week: str
+
+
+class WhyExplanation(BaseModel):
+    code: str
+    explanation: str
+    feature_value: str
