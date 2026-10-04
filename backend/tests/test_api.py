@@ -362,6 +362,7 @@ def test_admin_config_put_updates_and_versions(client: TestClient):
 def test_all_responses_contain_meta_fields(
     client: TestClient,
     ready_customer_id: str,
+    not_yet_customer_id: str,
 ):
     """
     Verify EVERY successful endpoint response contains model_version, data_as_of,
@@ -375,6 +376,7 @@ def test_all_responses_contain_meta_fields(
         ("GET", f"/customer/{ready_customer_id}/safe-range"),
         ("POST", f"/customer/{ready_customer_id}/loan-check", {"amount": 2000.0, "tenor_months": 6}),
         ("GET", f"/customer/{ready_customer_id}/calendar"),
+        ("GET", f"/customer/{not_yet_customer_id}/path"),
         ("GET", f"/customer/{ready_customer_id}/progress"),
         ("POST", f"/customer/{ready_customer_id}/consent", {"action": "consent"}),
         ("GET", "/admin/funnel"),
@@ -400,14 +402,14 @@ def test_all_responses_contain_meta_fields(
         # Check metadata fields presence
         if "meta" in data and data["meta"] is not None:
             meta = data["meta"]
-            assert "model_version" in meta
-            assert "data_as_of" in meta
-            assert "disclaimer" in meta
+            assert "model_version" in meta and len(meta["model_version"]) > 0
+            assert "data_as_of" in meta and len(meta["data_as_of"]) > 0
+            assert "disclaimer" in meta and len(meta["disclaimer"]) > 0
         else:
             # Fallback for health response which also contains them directly
-            assert "model_version" in data
-            assert "data_as_of" in data
-            assert "disclaimer" in data
+            assert "model_version" in data and len(data["model_version"]) > 0
+            assert "data_as_of" in data and len(data["data_as_of"]) > 0
+            assert "disclaimer" in data and len(data["disclaimer"]) > 0
 
         # Prohibited customer jargon check
         text_dump = str(data).lower()
@@ -417,3 +419,43 @@ def test_all_responses_contain_meta_fields(
                 assert not re.search(pattern, text_dump), (
                     f"Prohibited term '{term}' found in response from {url}: {data}"
                 )
+
+
+def test_contract_customer_and_admin_responses_meta_fields(
+    client: TestClient,
+    ready_customer_id: str,
+    not_yet_customer_id: str,
+):
+    """
+    Contract test: verify every customer response (status, safe-range, loan-check,
+    calendar, path, progress) and admin health response contains model_version,
+    data_as_of, and disclaimer in meta.
+    """
+    contract_endpoints = [
+        ("GET", f"/customer/{ready_customer_id}/status", None),
+        ("GET", f"/customer/{ready_customer_id}/safe-range", None),
+        ("POST", f"/customer/{ready_customer_id}/loan-check", {"amount": 3000.0, "tenor_months": 6}),
+        ("GET", f"/customer/{ready_customer_id}/calendar", None),
+        ("GET", f"/customer/{not_yet_customer_id}/path", None),
+        ("GET", f"/customer/{ready_customer_id}/progress", None),
+        ("GET", "/health", None),
+    ]
+
+    for method, url, payload in contract_endpoints:
+        if method == "GET":
+            res = client.get(url)
+        else:
+            res = client.post(url, json=payload)
+
+        assert res.status_code == 200, f"Contract check failed: {url} returned {res.status_code}"
+        data = res.json()
+
+        assert "meta" in data, f"Response from {url} is missing 'meta' object"
+        meta = data["meta"]
+        assert meta is not None, f"'meta' object in {url} is None"
+
+        for field in ["model_version", "data_as_of", "disclaimer"]:
+            assert field in meta, f"'{field}' missing from meta in {url}"
+            assert isinstance(meta[field], str), f"'{field}' in meta in {url} is not a string"
+            assert len(meta[field].strip()) > 0, f"'{field}' in meta in {url} is empty"
+
