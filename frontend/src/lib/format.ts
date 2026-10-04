@@ -19,15 +19,25 @@ export function toBanglaDigits(str: string): string {
   return str.replace(/[0-9]/g, (d) => BANGLA_DIGITS[d] || d);
 }
 
-export function formatNumber(num: number | null | undefined, useBanglaNumerals = false): string {
+export function formatNumber(
+  num: number | null | undefined,
+  useBanglaNumeralsOrLocale: boolean | string = false
+): string {
   if (num === null || num === undefined || isNaN(num)) return "0";
   const formatted = Math.round(num).toLocaleString("en-US");
-  if (useBanglaNumerals) {
+  const isBangla =
+    typeof useBanglaNumeralsOrLocale === "string"
+      ? useBanglaNumeralsOrLocale === "bn"
+      : Boolean(useBanglaNumeralsOrLocale);
+  if (isBangla) {
     return toBanglaDigits(formatted);
   }
   return formatted;
 }
 
-export function formatCurrency(amount: number | null | undefined, useBanglaNumerals = false): string {
-  return `৳${formatNumber(amount, useBanglaNumerals)}`;
+export function formatCurrency(
+  amount: number | null | undefined,
+  useBanglaNumeralsOrLocale: boolean | string = false
+): string {
+  return `৳${formatNumber(amount, useBanglaNumeralsOrLocale)}`;
 }
