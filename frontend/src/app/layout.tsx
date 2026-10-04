@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ConsentProvider } from "@/contexts/ConsentContext";
+import { BottomNav } from "@/components/BottomNav";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 const notoSansBengali = Noto_Sans_Bengali({
   subsets: ["bengali"],
   variable: "--font-noto-bengali",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "CreditPath",
-  description: "Loan-readiness and repayment-timing coach",
+  title: "CreditPath — Loan Readiness Coach",
+  description: "Loan-readiness and repayment-timing guidance by upay",
 };
 
 export default function RootLayout({
@@ -19,11 +28,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${notoSansBengali.variable} font-sans bg-gray-50 text-foreground`}>
-        <div className="mx-auto min-w-[360px] max-w-[430px] min-h-screen bg-background border-x border-border shadow-sm flex flex-col">
-          {children}
-        </div>
+    <html lang="en" className={`${inter.variable} ${notoSansBengali.variable}`}>
+      <body className="min-h-screen bg-[#F4F4F6] text-[#1A1A1F] font-sans antialiased">
+        <LanguageProvider>
+          <ConsentProvider>
+            {/* Mobile-first centered phone frame */}
+            <div className="flex justify-center min-h-screen">
+              <div className="w-full max-w-[430px] min-h-screen bg-white shadow-sm flex flex-col relative pb-20 border-x border-[#E8E8EC]">
+                {children}
+                <BottomNav />
+              </div>
+            </div>
+          </ConsentProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

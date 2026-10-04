@@ -1,16 +1,153 @@
 {
+  "nav": {
+    "home": "Home",
+    "loan_check": "Loan Check",
+    "calendar": "Calendar",
+    "me": "Me"
+  },
+  "common": {
+    "currency": "৳",
+    "why": "Why?",
+    "close": "Close",
+    "retry": "Try again",
+    "back": "Back",
+    "continue": "Continue",
+    "save": "Save",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "month": "month",
+    "months": "months",
+    "week": "week",
+    "weeks": "weeks",
+    "per_month": "/month",
+    "switch_customer": "Switch Customer",
+    "active": "Active",
+    "inactive": "Inactive",
+    "error_title": "Something went wrong",
+    "error_desc": "We could not load your data right now. Please try again.",
+    "empty_data_title": "Building your financial picture",
+    "empty_data_desc": "We need 3 months of wallet activity to build your picture. You currently have {months}."
+  },
+  "status": {
+    "ready": "Ready",
+    "not_yet": "Not yet",
+    "comfortable": "Comfortable",
+    "tight": "Tight",
+    "too_much": "Too much",
+    "safe": "Safe"
+  },
   "home": {
     "title": "Home",
     "ready": "Ready",
     "not_yet": "Not yet ready",
-    "see_safely_repay": "See what I can safely repay",
+    "ready_title": "You look ready for a loan",
+    "ready_desc": "Based on your wallet history, you have consistent income and room to repay.",
+    "not_yet_title": "Not quite ready yet",
+    "not_yet_desc": "A few more weeks of regular activity will help build your picture.",
+    "see_safe_range": "See what I can safely repay",
+    "see_path": "See path to ready",
     "see_whats_missing": "See what's missing",
-    "checks": {
-      "history": "Enough history",
-      "regularity": "Regular income",
-      "balance": "Sufficient balance",
-      "bills": "Bills paid on time"
-    }
+    "how_it_works": "How we check readiness",
+    "checks_summary": "4 Readiness Checks"
+  },
+  "checks": {
+    "history": "Enough wallet history",
+    "history_desc": "At least 3 months of wallet activity.",
+    "regularity": "Regular income",
+    "regularity_desc": "Consistent income flow across weeks.",
+    "balance": "Balance cushion",
+    "balance_desc": "Healthy balance above essentials.",
+    "bills": "Bills paid on time",
+    "bills_desc": "Consistent on-time utility payments."
+  },
+  "safe_range": {
+    "title": "Safe Repayment Range",
+    "subtitle": "A monthly payment you can comfortably afford each month.",
+    "monthly_payment": "Monthly payment range",
+    "stressed_range": "If income drops by 20%",
+    "basis": "Based on {months} months of your wallet activity",
+    "try_loan_check": "Check a specific loan amount",
+    "comfort_rule": "Comfort rule: stays under your monthly spare money even in tighter months."
+  },
+  "loan_check": {
+    "title": "Loan Check",
+    "subtitle": "See if a loan fits your monthly budget.",
+    "amount_label": "Loan amount",
+    "tenor_label": "Repayment time",
+    "monthly_payment_label": "Estimated monthly payment",
+    "total_repayment_label": "Total to repay",
+    "check_button": "Check this loan",
+    "verdict_title": "Verdict",
+    "nearest_title": "Alternative that fits",
+    "nearest_desc": "৳{amount} over {tenor} months (৳{payment}/mo) would be comfortable.",
+    "stress_note": "In a tighter month"
+  },
+  "calendar": {
+    "title": "Repayment Calendar",
+    "subtitle": "Find the best week to schedule your monthly payment.",
+    "recommended_window": "Best repayment window",
+    "recommended_window_desc": "Expected inflows are highest during this time.",
+    "avoid_weeks": "Tighter weeks to avoid",
+    "avoid_weeks_desc": "Outflows typically peak in these weeks.",
+    "heads_up": "Heads Up",
+    "forecast_title": "Upcoming 4-week forecast",
+    "money_in": "Expected in",
+    "money_out": "Expected out",
+    "expected_balance": "Projected balance"
+  },
+  "path": {
+    "title": "Path to Ready",
+    "subtitle": "Clear steps to help you qualify for a comfortable loan.",
+    "steps_title": "Things to work on",
+    "estimated_time": "Estimated time: ~{weeks} weeks",
+    "back_to_home": "Back to Home"
+  },
+  "progress": {
+    "title": "Your Progress",
+    "subtitle": "See how your financial habits have improved over the past months.",
+    "became_ready": "You became ready in {month}!",
+    "monthly_history": "Monthly check history",
+    "track_record": "Consistent habits over time build your borrowing confidence."
+  },
+  "me": {
+    "title": "Settings & Privacy",
+    "language_section": "Language & Numerals",
+    "english": "English",
+    "bangla": "বাংলা",
+    "bangla_numerals": "Bangla Numerals (১, ২, ৩)",
+    "english_numerals": "English Numerals (1, 2, 3)",
+    "coach_toggle": "CreditPath Coach",
+    "coach_toggle_desc": "Active guidance on your financial readiness.",
+    "customer_account": "Customer Profile",
+    "privacy_data": "Your Data & Privacy",
+    "privacy_desc": "Your data stays private. Protected attributes (gender, age, region) are NEVER used for readiness decisions.",
+    "about_title": "About CreditPath",
+    "about_desc": "CreditPath is a loan-readiness coaching tool. It helps you understand safe borrowing limits and find the best payment dates.",
+    "opt_out": "Turn off coaching",
+    "opt_in": "Turn on coaching",
+    "opt_out_confirm": "Are you sure you want to turn off coaching? Your guidance will be paused."
+  },
+  "consent": {
+    "title": "Welcome to CreditPath",
+    "subtitle": "Your personal financial readiness and timing coach by upay.",
+    "feature1_title": "Safe Borrowing Limits",
+    "feature1_desc": "Know exactly how much you can comfortably repay without stress.",
+    "feature2_title": "Smart Payment Timing",
+    "feature2_desc": "Schedule payments when your wallet balance is strongest.",
+    "feature3_title": "Private & Fair",
+    "feature3_desc": "No credit bureau checks. Your personal demographics are never used for scoring.",
+    "accept_button": "I Agree & Continue",
+    "decline_link": "No thanks, continue without coaching"
+  },
+  "admin": {
+    "title": "CreditPath Internal View",
+    "subtitle": "Model metrics, funnel conversion, and fairness audit.",
+    "funnel": "Funnel Conversion",
+    "forecast_quality": "Forecast Quality",
+    "fairness": "Fairness Audit",
+    "config": "Engine Configuration",
+    "kill_switch": "Emergency Controls"
   },
   "footer": {
     "disclaimer": "Built on synthetic data. Guidance only, not a loan offer."
