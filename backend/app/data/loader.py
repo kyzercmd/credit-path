@@ -5,23 +5,31 @@ import os
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 
+_data_cache: dict[str, pd.DataFrame] | None = None
+
 def save_data(tables: dict[str, pd.DataFrame], path: str = None) -> None:
+    global _data_cache
     if path is None:
         path = str(DATA_DIR)
+        _data_cache = None
         
     os.makedirs(path, exist_ok=True)
     
     for name, df in tables.items():
         df.to_parquet(Path(path) / f"{name}.parquet", engine="fastparquet")
 
-def load_data(path: str = None) -> dict[str, pd.DataFrame]:
-    if path is None:
-        path = str(DATA_DIR)
+def load_data(path: str = None, reload: bool = False) -> dict[str, pd.DataFrame]:
+    global _data_cache
+    if path is None and _data_cache is not None and not reload:
+        return _data_cache
         
+    target_path = Path(path) if path is not None else DATA_DIR
     tables = {}
     for name in ['customers', 'transactions', 'daily_balances', 'bills', 'customer_attributes']:
-        tables[name] = pd.read_parquet(Path(path) / f"{name}.parquet", engine="fastparquet")
+        tables[name] = pd.read_parquet(target_path / f"{name}.parquet", engine="fastparquet")
         
+    if path is None:
+        _data_cache = tables
     return tables
 
 def get_customer_ids(split: str = 'all') -> list[str]:

@@ -13,6 +13,9 @@ class CheckResult(BaseModel):
     name: str
     passed: bool
     reason: str
+    reason_code: str = ""
+    current_value: float | int | None = None
+    target_value: float | int | None = None
 
 
 class StatusResponse(BaseModel):
