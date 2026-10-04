@@ -4,7 +4,7 @@
 DONE
 
 ## Commits
-753bbe9
+f7d5b3a
 
 ## Test Summary
 10 feature tests passed (20 total backend tests passing): verification of no future leakage, exact feature columns present and non-null, lag feature alignment, exclusion of protected attributes and latent traits, edge cases (zero bills, zero income), determinism, calendar feature boundaries, shortfall_next_week target censoring, and customer/training helper functions.
