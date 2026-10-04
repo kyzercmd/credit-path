@@ -276,7 +276,7 @@ export function RuleSettings({ data, isLoading = false, onConfigSaved }: RuleSet
             <label htmlFor="max_dti_ratio" className="block text-xs font-semibold text-[#1A1A1F] mb-1">
               Max DTI Ratio (Affordability Cap)
             </label>
-            <p className="text-[11px] text-[#6B6B76] mb-2">Max repayment share of monthly surplus</p>
+            <p className="text-[11px] text-[#6B6B76] mb-2">Max repayment share of monthly spare money</p>
             <div className="relative">
               <input
                 id="max_dti_ratio"

@@ -290,6 +290,18 @@ def put_admin_config(payload: dict[str, Any]) -> ConfigResponse:
         if k in curr_dict:
             curr_dict[k] = v
 
+    # Validate boundary constraints
+    if "affordability_cap" in curr_dict and not (0.01 <= float(curr_dict["affordability_cap"]) <= 1.0):
+        raise HTTPException(status_code=400, detail="affordability_cap must be between 0.01 and 1.0")
+    if "stress_pct" in curr_dict and not (0.0 <= float(curr_dict["stress_pct"]) <= 0.99):
+        raise HTTPException(status_code=400, detail="stress_pct must be between 0.0 and 0.99")
+    if "bill_on_time_pct" in curr_dict and not (0.0 <= float(curr_dict["bill_on_time_pct"]) <= 1.0):
+        raise HTTPException(status_code=400, detail="bill_on_time_pct must be between 0.0 and 1.0")
+    if "illustrative_rate" in curr_dict and not (0.0 <= float(curr_dict["illustrative_rate"]) <= 1.0):
+        raise HTTPException(status_code=400, detail="illustrative_rate must be between 0.0 and 1.0")
+    if "max_loan_cap" in curr_dict and float(curr_dict["max_loan_cap"]) < 0:
+        raise HTTPException(status_code=400, detail="max_loan_cap must be non-negative")
+
     new_cfg = Config.from_dict(curr_dict)
     update_config(new_cfg)
     save_config_version(new_cfg.to_dict(), changed_by="admin")
