@@ -66,7 +66,7 @@ export default function MePage() {
               type="text"
               value={inputCustomer}
               onChange={(e) => setInputCustomer(e.target.value)}
-              placeholder="e.g. C0001"
+              placeholder="e.g. C00001"
               className="flex-1 min-h-[44px] px-3 py-2 rounded-xl border border-[#E8E8EC] text-sm font-mono uppercase focus:outline-none focus:border-[var(--accent)]"
             />
             <button
@@ -79,7 +79,7 @@ export default function MePage() {
 
           <div className="flex items-center gap-1.5 flex-wrap text-xs text-[#6B6B76] pt-1">
             <span>Quick switch:</span>
-            {["C0001", "C0002", "C0003", "C0004", "C0005"].map((cid) => (
+            {["C00001", "C00002", "C00003", "C00004", "C00005"].map((cid) => (
               <button
                 key={cid}
                 type="button"

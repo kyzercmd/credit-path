@@ -21,8 +21,14 @@ interface ConsentContextType {
 
 const ConsentContext = createContext<ConsentContextType | undefined>(undefined);
 
+const DEFAULT_CUSTOMER_ID = "C00001";
+
+function normalizeCustomerId(id: string): string {
+  return /^C\d{4}$/.test(id) ? `C0${id.slice(1)}` : id;
+}
+
 export function ConsentProvider({ children }: { children: ReactNode }) {
-  const [customerId, setCustomerId] = useState<string>("C0001");
+  const [customerId, setCustomerId] = useState<string>(DEFAULT_CUSTOMER_ID);
   const [hasConsented, setHasConsented] = useState<boolean>(true);
   const [coachActive, setCoachActiveState] = useState<boolean>(true);
   const [consentLog, setConsentLog] = useState<ConsentLogEntry[]>([]);
@@ -30,8 +36,12 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const savedCustomer = localStorage.getItem("creditpath_customer_id");
-      if (savedCustomer) {
-        setCustomerId(savedCustomer);
+      const normalizedCustomer = savedCustomer
+        ? normalizeCustomerId(savedCustomer)
+        : DEFAULT_CUSTOMER_ID;
+      setCustomerId(normalizedCustomer);
+      if (normalizedCustomer !== savedCustomer) {
+        localStorage.setItem("creditpath_customer_id", normalizedCustomer);
       }
       const savedConsent = localStorage.getItem("creditpath_consent");
       if (savedConsent !== null) {
@@ -52,7 +62,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
               {
                 action: "consent",
                 timestamp: new Date().toISOString(),
-                customerId: savedCustomer || "C0001",
+                customerId: normalizedCustomer,
               },
             ]);
           }
@@ -61,7 +71,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
             {
               action: "consent",
               timestamp: new Date().toISOString(),
-              customerId: savedCustomer || "C0001",
+              customerId: normalizedCustomer,
             },
           ]);
         }
@@ -69,7 +79,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
         const initialEntry: ConsentLogEntry = {
           action: "consent",
           timestamp: new Date().toISOString(),
-          customerId: savedCustomer || "C0001",
+          customerId: normalizedCustomer,
         };
         setConsentLog([initialEntry]);
         try {
