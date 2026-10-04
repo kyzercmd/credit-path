@@ -12,12 +12,11 @@ import { Footer } from "@/components/Footer";
 import { Skeleton } from "@/components/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { WhySheet } from "@/components/WhySheet";
-import { formatCurrency } from "@/lib/format";
 import { ArrowLeft, ArrowRight, ShieldCheck, TrendingDown, HelpCircle } from "lucide-react";
 
 export default function SafeRangePage() {
   const router = useRouter();
-  const { t, locale } = useLanguage();
+  const { t, locale, formatCurrency } = useLanguage();
   const { customerId } = useConsent();
 
   const [data, setData] = useState<SafeRangeResponse | null>(null);
@@ -135,7 +134,7 @@ export default function SafeRangePage() {
             {t("safe_range.monthly_payment")}
           </div>
           <div className="text-3xl font-extrabold text-[#1A1A1F] tracking-tight">
-            {formatCurrency(data.monthly_low, locale)} — {formatCurrency(data.monthly_high, locale)}
+            {formatCurrency(data.monthly_low)} — {formatCurrency(data.monthly_high)}
           </div>
           <div className="text-xs text-[#6B6B76] mt-1">
             {t("common.per_month")}
@@ -157,7 +156,7 @@ export default function SafeRangePage() {
           </div>
           <div className="text-right shrink-0">
             <span className="text-sm font-bold text-[#1A1A1F]">
-              {formatCurrency(data.stressed_low, locale)} - {formatCurrency(data.stressed_high, locale)}
+              {formatCurrency(data.stressed_low)} - {formatCurrency(data.stressed_high)}
             </span>
           </div>
         </div>
@@ -197,10 +196,10 @@ export default function SafeRangePage() {
         isOpen={showWhy}
         onClose={() => setShowWhy(false)}
         title={t("safe_range.title")}
-        explanation="Your safe repayment range is calculated from your verified monthly surplus (cash inflows minus predictable outflows), capped at 40% so you always keep a buffer for living expenses and emergencies."
-        featureValue={`${formatCurrency(data.monthly_low, locale)} — ${formatCurrency(data.monthly_high, locale)} / mo`}
+        explanation="Your safe repayment range is calculated from your verified monthly spare money (cash inflows minus predictable outflows), capped at 40% so you always keep a buffer for living expenses and emergencies."
+        featureValue={`${formatCurrency(data.monthly_low)} — ${formatCurrency(data.monthly_high)} / mo`}
         targetValue="≤ 40% of free cash flow"
-        code="affordability_surplus_cap"
+        code="affordability_spare_money_cap"
       />
     </div>
   );

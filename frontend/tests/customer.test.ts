@@ -67,4 +67,72 @@ describe("Task 9: Customer Screens Verification", () => {
     assert.ok(consentContent.includes("handleAccept"), "Consent page must include accept handler");
     assert.ok(consentContent.includes("handleDecline"), "Consent page must include decline handler");
   });
+
+  test("Review fixes: progress bill payments, consent log, 30% safe range, and no surplus jargon", () => {
+    // 1. Progress page displays bill payment on-time percentage
+    const progressContent = fs.readFileSync(path.resolve("src/app/progress/page.tsx"), "utf-8");
+    assert.ok(
+      progressContent.includes("bill_payments_title") ||
+        progressContent.includes("Bill payments on time"),
+      "Progress page must display bill payment on-time percentage"
+    );
+    assert.ok(
+      progressContent.includes("bill_on_time_pct"),
+      "Progress page must use bill_on_time_pct metric"
+    );
+
+    // 2. Me page displays consent log
+    const meContent = fs.readFileSync(path.resolve("src/app/me/page.tsx"), "utf-8");
+    assert.ok(
+      meContent.includes("consent_log") || meContent.includes("consentLog"),
+      "Me page must display consent log"
+    );
+
+    // 3. Safe range copy states 30%
+    const enJson = JSON.parse(fs.readFileSync(path.resolve("src/i18n/en.json"), "utf-8"));
+    const bnJson = JSON.parse(fs.readFileSync(path.resolve("src/i18n/bn.json"), "utf-8"));
+    assert.ok(
+      enJson.safe_range.stressed_range.includes("30%"),
+      "Safe range English copy must state 30%"
+    );
+    assert.ok(
+      bnJson.safe_range.stressed_range.includes("৩০%"),
+      "Safe range Bangla copy must state 30% (৩০%)"
+    );
+
+    // 4. Jargon 'surplus' is not present in customer screens
+    const safeRangeContent = fs.readFileSync(path.resolve("src/app/safe-range/page.tsx"), "utf-8");
+    assert.ok(
+      !safeRangeContent.toLowerCase().includes("monthly surplus"),
+      "SafeRange WhySheet must not use jargon 'monthly surplus'"
+    );
+    assert.ok(
+      !safeRangeContent.includes("affordability_surplus_cap"),
+      "SafeRange WhySheet code must not use 'affordability_surplus_cap'"
+    );
+
+    const loanContent = fs.readFileSync(path.resolve("src/app/loan-check/page.tsx"), "utf-8");
+    assert.ok(
+      !loanContent.toLowerCase().includes("of surplus"),
+      "LoanCheck WhySheet must not use jargon 'of surplus'"
+    );
+    assert.ok(
+      !loanContent.toLowerCase().includes("surplus = comfortable"),
+      "LoanCheck WhySheet target must not use jargon 'surplus = Comfortable'"
+    );
+
+    // 5. Numeral formatting: customer screens consume from useLanguage()
+    assert.ok(
+      !safeRangeContent.includes('from "@/lib/format"'),
+      "SafeRange must consume formatters from useLanguage()"
+    );
+    assert.ok(
+      !loanContent.includes('from "@/lib/format"'),
+      "LoanCheck must consume formatters from useLanguage()"
+    );
+    assert.ok(
+      !progressContent.includes('from "@/lib/format"'),
+      "Progress must consume formatters from useLanguage()"
+    );
+  });
 });

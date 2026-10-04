@@ -14,14 +14,13 @@ import {
 } from "recharts";
 import { WeekForecast } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { formatCurrency, formatNumber } from "@/lib/format";
 
 interface WeeklyChartProps {
   weeks: WeekForecast[];
 }
 
 export function WeeklyChart({ weeks }: WeeklyChartProps) {
-  const { t, locale } = useLanguage();
+  const { t, formatCurrency } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -69,15 +68,15 @@ export function WeeklyChart({ weeks }: WeeklyChartProps) {
           <p className="font-bold text-[#1A1A1F]">{item.rawWeek || label}</p>
           <div className="flex items-center justify-between gap-4 text-[#107C41]">
             <span>{t("calendar.money_in")}:</span>
-            <span className="font-semibold">{formatCurrency(item.moneyIn, locale)}</span>
+            <span className="font-semibold">{formatCurrency(item.moneyIn)}</span>
           </div>
           <div className="flex items-center justify-between gap-4 text-[#C5221F]">
             <span>{t("calendar.money_out")}:</span>
-            <span className="font-semibold">{formatCurrency(item.moneyOut, locale)}</span>
+            <span className="font-semibold">{formatCurrency(item.moneyOut)}</span>
           </div>
           <div className="flex items-center justify-between gap-4 text-[#005A9C] pt-1 border-t border-gray-100">
             <span>{t("calendar.expected_balance")}:</span>
-            <span className="font-bold">{formatCurrency(item.expectedBalance, locale)}</span>
+            <span className="font-bold">{formatCurrency(item.expectedBalance)}</span>
           </div>
           {item.status && (
             <div className="pt-1 text-[11px] text-[#6B6B76]">

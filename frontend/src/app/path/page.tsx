@@ -12,12 +12,11 @@ import { Footer } from "@/components/Footer";
 import { Skeleton } from "@/components/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { WhySheet } from "@/components/WhySheet";
-import { formatNumber } from "@/lib/format";
 import { ArrowLeft, CheckCircle2, Clock, Compass, HelpCircle, Sparkles } from "lucide-react";
 
 export default function PathPage() {
   const router = useRouter();
-  const { t, locale } = useLanguage();
+  const { t, formatNumber } = useLanguage();
   const { customerId } = useConsent();
 
   const [data, setData] = useState<PathResponse | null>(null);
@@ -122,7 +121,7 @@ export default function PathPage() {
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#6B6B76] bg-gray-100 px-2 py-0.5 rounded-full shrink-0">
                   <Clock className="w-3 h-3" />
                   <span>
-                    ~{formatNumber(step.estimated_weeks, locale)}{" "}
+                    ~{formatNumber(step.estimated_weeks)}{" "}
                     {step.estimated_weeks === 1 ? t("common.week") : t("common.weeks")}
                   </span>
                 </span>

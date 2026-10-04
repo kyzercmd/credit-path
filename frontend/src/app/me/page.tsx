@@ -22,7 +22,7 @@ import {
 
 export default function MePage() {
   const { t, locale, useBanglaNumerals, toggleLanguage, setUseBanglaNumerals } = useLanguage();
-  const { customerId, coachActive, setCoachActive, switchCustomer } = useConsent();
+  const { customerId, coachActive, setCoachActive, switchCustomer, consentLog } = useConsent();
 
   const [inputCustomer, setInputCustomer] = useState(customerId);
   const [toggleLoading, setToggleLoading] = useState(false);
@@ -194,7 +194,63 @@ export default function MePage() {
         </p>
       </Card>
 
-      {/* Card 5: About CreditPath (F11) */}
+      {/* Card 5: Consent Log (F10) */}
+      <Card
+        title={t("me.consent_log")}
+        subtitle={t("me.consent_log_desc")}
+        headerRight={
+          <div className="w-7 h-7 rounded-lg bg-[#EAF5EE] text-[#107C41] flex items-center justify-center">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+        }
+      >
+        {consentLog.length === 0 ? (
+          <p className="text-xs text-[#6B6B76] py-2">
+            No consent records found.
+          </p>
+        ) : (
+          <div className="space-y-2.5 pt-1">
+            {consentLog.map((entry, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-2.5 rounded-xl border border-[#E8E8EC] bg-[#FAFAFB] text-xs"
+              >
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full ${
+                        entry.action === "consent" ? "bg-[#107C41]" : "bg-[#B25E02]"
+                      }`}
+                    />
+                    <span className="font-semibold text-[#1A1A1F]">
+                      {entry.action === "consent"
+                        ? t("me.consent_granted")
+                        : t("me.consent_revoked")}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#6B6B76] bg-gray-200/60 px-1.5 py-0.5 rounded">
+                      {entry.customerId}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#6B6B76]">
+                    {entry.timestamp.replace("T", " ").slice(0, 19)}
+                  </p>
+                </div>
+                <span
+                  className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                    entry.action === "consent"
+                      ? "bg-[#EAF5EE] text-[#107C41]"
+                      : "bg-[#FEF5E7] text-[#B25E02]"
+                  }`}
+                >
+                  {entry.action === "consent" ? "Active" : "Paused"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Card 6: About CreditPath (F11) */}
       <Card
         title={t("me.about_title")}
         headerRight={

@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { formatCurrency, formatNumber } from "@/lib/format";
 import { Minus, Plus } from "lucide-react";
 
 interface LoanSlidersProps {
@@ -28,7 +27,7 @@ export function LoanSliders({
   minTenor = 1,
   maxTenor = 24,
 }: LoanSlidersProps) {
-  const { t, locale } = useLanguage();
+  const { t, formatCurrency, formatNumber } = useLanguage();
 
   const handleAmountStep = (delta: number) => {
     const next = Math.max(minAmount, Math.min(maxAmount, amount + delta));
@@ -49,7 +48,7 @@ export function LoanSliders({
             {t("loan_check.amount_label")}
           </label>
           <span className="text-xl font-bold text-[#1A1A1F]">
-            {formatCurrency(amount, locale)}
+            {formatCurrency(amount)}
           </span>
         </div>
 
@@ -90,8 +89,8 @@ export function LoanSliders({
         </div>
 
         <div className="flex justify-between text-xs text-[#6B6B76] mt-1.5 px-0.5">
-          <span>{formatCurrency(minAmount, locale)}</span>
-          <span>{formatCurrency(maxAmount, locale)}</span>
+          <span>{formatCurrency(minAmount)}</span>
+          <span>{formatCurrency(maxAmount)}</span>
         </div>
       </div>
 
@@ -102,7 +101,7 @@ export function LoanSliders({
             {t("loan_check.tenor_label")}
           </label>
           <span className="text-xl font-bold text-[#1A1A1F]">
-            {formatNumber(tenor, locale)} {tenor === 1 ? t("common.month") : t("common.months")}
+            {formatNumber(tenor)} {tenor === 1 ? t("common.month") : t("common.months")}
           </span>
         </div>
 
@@ -143,8 +142,8 @@ export function LoanSliders({
         </div>
 
         <div className="flex justify-between text-xs text-[#6B6B76] mt-1.5 px-0.5">
-          <span>{formatNumber(minTenor, locale)} {t("common.month")}</span>
-          <span>{formatNumber(maxTenor, locale)} {t("common.months")}</span>
+          <span>{formatNumber(minTenor)} {t("common.month")}</span>
+          <span>{formatNumber(maxTenor)} {t("common.months")}</span>
         </div>
       </div>
     </div>

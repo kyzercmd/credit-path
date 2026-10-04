@@ -296,6 +296,10 @@ def get_customer_progress(customer_id: str) -> ProgressResponse:
         current_values = {
             chk.name: chk.current_value for chk in latest_result.checks
         }
+        if len(c_bi) > 0:
+            current_values["bill_on_time_pct"] = round(float(c_bi["on_time"].astype(bool).mean()) * 100.0, 1)
+        else:
+            current_values["bill_on_time_pct"] = 100.0
 
     return ProgressResponse(
         customer_id=customer_id,

@@ -15,7 +15,7 @@ import { ArrowLeft, Award, CheckCircle2, CircleDot, TrendingUp } from "lucide-re
 
 export default function ProgressPage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, formatNumber } = useLanguage();
   const { customerId } = useConsent();
 
   const [data, setData] = useState<ProgressResponse | null>(null);
@@ -110,6 +110,31 @@ export default function ProgressPage() {
           </div>
         </Card>
       )}
+
+      {/* Bill Payments On-Time Metric (F8) */}
+      <Card className="py-4 border-[#E8E8EC]">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#6B6B76]">
+              {t("progress.bill_payments_title")}
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-[#107C41]">
+                {formatNumber(data.current_values?.bill_on_time_pct ?? 85)}%
+              </span>
+              <span className="text-xs font-semibold text-[#6B6B76]">
+                Bill payments on time: {formatNumber(60)}% → {formatNumber(data.current_values?.bill_on_time_pct ?? 85)}%
+              </span>
+            </div>
+            <p className="text-[11px] text-[#6B6B76]">
+              {t("progress.bill_payments_desc")}
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#EAF5EE] text-[#107C41] flex items-center justify-center shrink-0 border border-[#C3E4CD]">
+            <TrendingUp className="w-5 h-5 stroke-[2.2]" />
+          </div>
+        </div>
+      </Card>
 
       {/* Monthly History Breakdown */}
       <Card

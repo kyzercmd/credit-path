@@ -65,7 +65,7 @@
     "title": "Safe Repayment Range",
     "subtitle": "A monthly payment you can comfortably afford each month.",
     "monthly_payment": "Monthly payment range",
-    "stressed_range": "If income drops by 20%",
+    "stressed_range": "If income drops by 30%",
     "basis": "Based on {months} months of your wallet activity",
     "try_loan_check": "Check a specific loan amount",
     "comfort_rule": "Comfort rule: stays under your monthly spare money even in tighter months."
@@ -108,7 +108,10 @@
     "subtitle": "See how your financial habits have improved over the past months.",
     "became_ready": "You became ready in {month}!",
     "monthly_history": "Monthly check history",
-    "track_record": "Consistent habits over time build your borrowing confidence."
+    "track_record": "Consistent habits over time build your borrowing confidence.",
+    "bill_payments_title": "Bill payments on time",
+    "bill_payments_metric": "Bill payments on time: {from}% → {to}%",
+    "bill_payments_desc": "Consistent utility and bill payments demonstrate improving financial discipline."
   },
   "me": {
     "title": "Settings & Privacy",
@@ -126,7 +129,11 @@
     "about_desc": "CreditPath is a loan-readiness coaching tool. It helps you understand safe borrowing limits and find the best payment dates.",
     "opt_out": "Turn off coaching",
     "opt_in": "Turn on coaching",
-    "opt_out_confirm": "Are you sure you want to turn off coaching? Your guidance will be paused."
+    "opt_out_confirm": "Are you sure you want to turn off coaching? Your guidance will be paused.",
+    "consent_log": "Consent Log",
+    "consent_log_desc": "Audit trail of your data sharing and coaching consent decisions.",
+    "consent_granted": "Consent Granted",
+    "consent_revoked": "Consent Revoked"
   },
   "consent": {
     "title": "Welcome to CreditPath",
@@ -138,7 +145,8 @@
     "feature3_title": "Private & Fair",
     "feature3_desc": "No credit bureau checks. Your personal demographics are never used for scoring.",
     "accept_button": "I Agree & Continue",
-    "decline_link": "No thanks, continue without coaching"
+    "decline_link": "No thanks, continue without coaching",
+    "prior_consent": "Prior Consent Records"
   },
   "admin": {
     "title": "CreditPath Internal View",

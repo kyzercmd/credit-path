@@ -3,10 +3,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { postConsent } from "@/lib/api";
 
+export interface ConsentLogEntry {
+  action: "consent" | "opt-out";
+  timestamp: string;
+  customerId: string;
+}
+
 interface ConsentContextType {
   customerId: string;
   hasConsented: boolean;
   coachActive: boolean;
+  consentLog: ConsentLogEntry[];
   setConsent: (consented: boolean) => Promise<void>;
   setCoachActive: (active: boolean) => Promise<void>;
   switchCustomer: (id: string) => void;
@@ -18,6 +25,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   const [customerId, setCustomerId] = useState<string>("C0001");
   const [hasConsented, setHasConsented] = useState<boolean>(true);
   const [coachActive, setCoachActiveState] = useState<boolean>(true);
+  const [consentLog, setConsentLog] = useState<ConsentLogEntry[]>([]);
 
   useEffect(() => {
     try {
@@ -32,6 +40,41 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
       const savedCoach = localStorage.getItem("creditpath_coach_active");
       if (savedCoach !== null) {
         setCoachActiveState(savedCoach === "true");
+      }
+      const savedLog = localStorage.getItem("creditpath_consent_log");
+      if (savedLog) {
+        try {
+          const parsed = JSON.parse(savedLog);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setConsentLog(parsed);
+          } else {
+            setConsentLog([
+              {
+                action: "consent",
+                timestamp: new Date().toISOString(),
+                customerId: savedCustomer || "C0001",
+              },
+            ]);
+          }
+        } catch {
+          setConsentLog([
+            {
+              action: "consent",
+              timestamp: new Date().toISOString(),
+              customerId: savedCustomer || "C0001",
+            },
+          ]);
+        }
+      } else {
+        const initialEntry: ConsentLogEntry = {
+          action: "consent",
+          timestamp: new Date().toISOString(),
+          customerId: savedCustomer || "C0001",
+        };
+        setConsentLog([initialEntry]);
+        try {
+          localStorage.setItem("creditpath_consent_log", JSON.stringify([initialEntry]));
+        } catch {}
       }
     } catch {
       // Ignore storage errors
@@ -49,6 +92,18 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
     async (consented: boolean) => {
       setHasConsented(consented);
       setCoachActiveState(consented);
+      const entry: ConsentLogEntry = {
+        action: consented ? "consent" : "opt-out",
+        timestamp: new Date().toISOString(),
+        customerId,
+      };
+      setConsentLog((prev) => {
+        const next = [entry, ...prev];
+        try {
+          localStorage.setItem("creditpath_consent_log", JSON.stringify(next));
+        } catch {}
+        return next;
+      });
       try {
         localStorage.setItem("creditpath_consent", String(consented));
         localStorage.setItem("creditpath_coach_active", String(consented));
@@ -66,6 +121,18 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   const setCoachActive = useCallback(
     async (active: boolean) => {
       setCoachActiveState(active);
+      const entry: ConsentLogEntry = {
+        action: active ? "consent" : "opt-out",
+        timestamp: new Date().toISOString(),
+        customerId,
+      };
+      setConsentLog((prev) => {
+        const next = [entry, ...prev];
+        try {
+          localStorage.setItem("creditpath_consent_log", JSON.stringify(next));
+        } catch {}
+        return next;
+      });
       try {
         localStorage.setItem("creditpath_coach_active", String(active));
       } catch {}
@@ -93,6 +160,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
         customerId,
         hasConsented,
         coachActive,
+        consentLog,
         setConsent,
         setCoachActive,
         switchCustomer,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -14,12 +14,11 @@ import { Footer } from "@/components/Footer";
 import { Skeleton } from "@/components/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { WhySheet } from "@/components/WhySheet";
-import { formatCurrency, formatNumber } from "@/lib/format";
 import { ArrowLeft, HelpCircle, Sparkles, AlertCircle, ShieldAlert } from "lucide-react";
 
 export default function LoanCheckPage() {
   const router = useRouter();
-  const { t, locale } = useLanguage();
+  const { t, locale, formatCurrency, formatNumber } = useLanguage();
   const { customerId } = useConsent();
 
   const [amount, setAmount] = useState<number>(10000);
@@ -32,8 +31,12 @@ export default function LoanCheckPage() {
   const [isKilled, setIsKilled] = useState<boolean>(false);
   const [showWhy, setShowWhy] = useState<boolean>(false);
 
+  const reqSeqRef = useRef<number>(0);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const runCheck = useCallback(
     async (amt: number, tnr: number, isInitial = false) => {
+      const seq = ++reqSeqRef.current;
       if (isInitial) setLoading(true);
       else setCalculating(true);
       setError(null);
@@ -41,16 +44,22 @@ export default function LoanCheckPage() {
 
       try {
         const res = await postLoanCheck(customerId, amt, tnr);
-        setData(res);
+        if (seq === reqSeqRef.current) {
+          setData(res);
+        }
       } catch (err: any) {
-        if (err instanceof ApiError && err.status === 403) {
-          setIsKilled(true);
-        } else {
-          setError(err?.message || "Failed to calculate loan check");
+        if (seq === reqSeqRef.current) {
+          if (err instanceof ApiError && err.status === 403) {
+            setIsKilled(true);
+          } else {
+            setError(err?.message || "Failed to calculate loan check");
+          }
         }
       } finally {
-        setLoading(false);
-        setCalculating(false);
+        if (seq === reqSeqRef.current) {
+          setLoading(false);
+          setCalculating(false);
+        }
       }
     },
     [customerId]
@@ -61,25 +70,46 @@ export default function LoanCheckPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerId]);
 
+  const scheduleCheck = useCallback(
+    (amt: number, tnr: number) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = setTimeout(() => {
+        runCheck(amt, tnr, false);
+      }, 250);
+    },
+    [runCheck]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleAmountChange = (newAmt: number) => {
     setAmount(newAmt);
-    runCheck(newAmt, tenor, false);
+    scheduleCheck(newAmt, tenor);
   };
 
   const handleTenorChange = (newTenor: number) => {
     setTenor(newTenor);
-    runCheck(amount, newTenor, false);
+    scheduleCheck(amount, newTenor);
   };
 
   const applyNearestComfortable = () => {
     if (data?.nearest_comfortable) {
-      setAmount(data.nearest_comfortable.amount);
-      setTenor(data.nearest_comfortable.tenor_months);
-      runCheck(
-        data.nearest_comfortable.amount,
-        data.nearest_comfortable.tenor_months,
-        false
-      );
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      const newAmt = data.nearest_comfortable.amount;
+      const newTenor = data.nearest_comfortable.tenor_months;
+      setAmount(newAmt);
+      setTenor(newTenor);
+      runCheck(newAmt, newTenor, false);
     }
   };
 
@@ -189,7 +219,7 @@ export default function LoanCheckPage() {
                 {t("loan_check.monthly_payment_label")}
               </span>
               <div className="text-xl font-extrabold text-[#1A1A1F]">
-                {formatCurrency(data.monthly_payment, locale)}
+                {formatCurrency(data.monthly_payment)}
                 <span className="text-xs font-normal text-[#6B6B76]">
                   {t("common.per_month")}
                 </span>
@@ -220,7 +250,7 @@ export default function LoanCheckPage() {
           <div className="flex justify-between items-center py-2.5 px-3 bg-[#F8F9FA] rounded-xl text-xs">
             <span className="text-[#6B6B76]">{t("loan_check.total_repayment_label")}</span>
             <span className="font-bold text-[#1A1A1F]">
-              {formatCurrency(data.total_repayment, locale)}
+              {formatCurrency(data.total_repayment)}
             </span>
           </div>
 
@@ -232,9 +262,9 @@ export default function LoanCheckPage() {
                 <span>{t("loan_check.nearest_title")}</span>
               </div>
               <p className="text-xs text-[#1A1A1F] leading-relaxed">
-                ৳{formatNumber(data.nearest_comfortable.amount, locale)} over{" "}
-                {formatNumber(data.nearest_comfortable.tenor_months, locale)} months (৳
-                {formatNumber(data.nearest_comfortable.monthly_payment, locale)}/mo) would fit comfortably.
+                ৳{formatNumber(data.nearest_comfortable.amount)} over{" "}
+                {formatNumber(data.nearest_comfortable.tenor_months)} months (৳
+                {formatNumber(data.nearest_comfortable.monthly_payment)}/mo) would fit comfortably.
               </p>
               <button
                 type="button"
@@ -258,8 +288,8 @@ export default function LoanCheckPage() {
           onClose={() => setShowWhy(false)}
           title={t("loan_check.title")}
           explanation={data.verdict_reason}
-          featureValue={`৳${formatNumber(data.monthly_payment, locale)} / mo (${Math.round(data.surplus_share * 100)}% of surplus)`}
-          targetValue="< 40% surplus = Comfortable"
+          featureValue={`৳${formatNumber(data.monthly_payment)} / mo (${formatNumber(Math.round(data.surplus_share * 100))}% of spare money)`}
+          targetValue="< 40% spare money = Comfortable"
           code="affordability_verdict"
         />
       )}

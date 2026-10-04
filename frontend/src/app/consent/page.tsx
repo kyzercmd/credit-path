@@ -12,7 +12,7 @@ import { ShieldCheck, Calendar, TrendingUp } from "lucide-react";
 export default function ConsentPage() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { setConsent } = useConsent();
+  const { setConsent, consentLog } = useConsent();
   const [loading, setLoading] = useState(false);
 
   const handleAccept = async () => {
@@ -100,6 +100,40 @@ export default function ConsentPage() {
             </div>
           </div>
         </div>
+
+        {/* Prior Consent Activity (if exists) */}
+        {consentLog && consentLog.length > 0 && (
+          <div className="mb-6 p-3.5 rounded-2xl border border-[#E8E8EC] bg-[#F8F9FA]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-[#1A1A1F]">
+                {t("consent.prior_consent")}
+              </span>
+              <span className="text-[10px] text-[#6B6B76] font-mono">
+                {consentLog.length} record(s)
+              </span>
+            </div>
+            <div className="space-y-1.5 max-h-28 overflow-y-auto">
+              {consentLog.slice(0, 3).map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between text-[11px] text-[#6B6B76] border-t border-gray-100 pt-1.5"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className={`inline-block w-1.5 h-1.5 rounded-full ${
+                        item.action === "consent" ? "bg-[#107C41]" : "bg-[#B25E02]"
+                      }`}
+                    />
+                    {item.action === "consent" ? t("me.consent_granted") : t("me.consent_revoked")} ({item.customerId})
+                  </span>
+                  <span className="font-mono text-[10px]">
+                    {item.timestamp.replace("T", " ").slice(0, 16)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action buttons & Footer */}
