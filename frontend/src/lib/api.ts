@@ -233,16 +233,93 @@ export interface WhyExplanation {
   feature_value: string;
 }
 
+export interface FunnelStageMetric {
+  unique_users: number;
+  step_conversion_pct: number;
+  overall_conversion_pct: number;
+}
+
+export interface FunnelAnalyticsResponse {
+  total_tracked_users: number;
+  stages: Record<string, FunnelStageMetric>;
+  counts_by_stage: Record<string, number>;
+  meta: Meta;
+}
+
+export interface TrialCohortMetric {
+  regime_name: string;
+  approved_count: number;
+  approval_rate: number;
+  simulated_defaults: number;
+  default_rate_pd: number;
+  expected_loss_per_loan: number;
+}
+
+export interface TrialUpliftMetric {
+  default_rate_reduction_pct: number;
+  approval_rate_delta_pct: number;
+  expected_loss_savings_per_loan_bdt: number;
+  timing_shortfalls_avoided_pct: number;
+  conclusion: string;
+}
+
+export interface TrialEvaluationResponse {
+  disclaimer: string;
+  sample_size: number;
+  baseline_control: TrialCohortMetric;
+  treatment_creditpath: TrialCohortMetric;
+  empirical_uplift: TrialUpliftMetric;
+  meta: Meta;
+}
+
+export interface ReadinessTransitionDelta {
+  previous_ready: boolean;
+  current_ready: boolean;
+  status_changed: boolean;
+  previous_status: string;
+  current_status: string;
+  checks_passed_count: number;
+  total_checks_count: number;
+  message: string;
+}
+
+export interface IngestEventResponse {
+  customer_id: string;
+  event_type: string;
+  recorded: boolean;
+  as_of_date: string;
+  transition: ReadinessTransitionDelta | null;
+  meta: Meta | null;
+}
+
+let adminApiKey: string = process.env.NEXT_PUBLIC_ADMIN_API_KEY || "creditpath-admin-secret-key-2026";
+let adminToken: string = process.env.NEXT_PUBLIC_ADMIN_TOKEN || "";
+
+export function setAdminAuth(tokenOrKey: { apiKey?: string; token?: string }) {
+  if (tokenOrKey.apiKey !== undefined) adminApiKey = tokenOrKey.apiKey;
+  if (tokenOrKey.token !== undefined) adminToken = tokenOrKey.token;
+}
+
 export async function fetchAPI<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
   let res: Response;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (endpoint.startsWith("/admin")) {
+    if (adminApiKey) {
+      headers["X-Admin-API-Key"] = adminApiKey;
+    } else if (adminToken) {
+      headers["Authorization"] = `Bearer ${adminToken}`;
+    }
+  }
+
   try {
     res = await fetch(url, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
     });
   } catch (networkErr: any) {
     throw new ApiError(0, networkErr?.message || "Network request failed", networkErr);
@@ -274,18 +351,24 @@ export async function fetchAPI<T = any>(endpoint: string, options: RequestInit =
   return data as T;
 }
 
-export async function getStatus(customerId: string): Promise<StatusResponse> {
-  return fetchAPI<StatusResponse>(`/customer/${encodeURIComponent(customerId)}/status`);
+export async function getStatus(customerId: string, asOf?: string): Promise<StatusResponse> {
+  const q = asOf ? `?as_of=${encodeURIComponent(asOf)}` : "";
+  return fetchAPI<StatusResponse>(`/customer/${encodeURIComponent(customerId)}/status${q}`);
 }
 
-export async function getSafeRange(customerId: string): Promise<SafeRangeResponse> {
-  return fetchAPI<SafeRangeResponse>(`/customer/${encodeURIComponent(customerId)}/safe-range`);
+export async function getSafeRange(customerId: string, asOf?: string): Promise<SafeRangeResponse> {
+  const q = asOf ? `?as_of=${encodeURIComponent(asOf)}` : "";
+  return fetchAPI<SafeRangeResponse>(`/customer/${encodeURIComponent(customerId)}/safe-range${q}`);
 }
 
 export async function postLoanCheck(
   customerId: string,
   amount: number,
   tenorMonths: number,
+  asOf?: string
+): Promise<LoanCheckResponse> {
+  const q = asOf ? `?as_of=${encodeURIComponent(asOf)}` : "";
+  return fetchAPI<LoanCheckResponse>(`/customer/${encodeURIComponent(customerId)}/loan-check${q}`, {
   financing?: Pick<LoanCheckRequest, "financing_structure" | "total_repayment" | "provider_fees">
 ): Promise<LoanCheckResponse> {
   const body: LoanCheckRequest = { amount, tenor_months: tenorMonths, ...(financing ?? {}) };
@@ -295,16 +378,57 @@ export async function postLoanCheck(
   });
 }
 
-export async function getCalendar(customerId: string): Promise<CalendarResponse> {
-  return fetchAPI<CalendarResponse>(`/customer/${encodeURIComponent(customerId)}/calendar`);
+export async function getCalendar(customerId: string, asOf?: string): Promise<CalendarResponse> {
+  const q = asOf ? `?as_of=${encodeURIComponent(asOf)}` : "";
+  return fetchAPI<CalendarResponse>(`/customer/${encodeURIComponent(customerId)}/calendar${q}`);
 }
 
-export async function getPath(customerId: string): Promise<PathResponse> {
-  return fetchAPI<PathResponse>(`/customer/${encodeURIComponent(customerId)}/path`);
+export async function getPath(customerId: string, asOf?: string): Promise<PathResponse> {
+  const q = asOf ? `?as_of=${encodeURIComponent(asOf)}` : "";
+  return fetchAPI<PathResponse>(`/customer/${encodeURIComponent(customerId)}/path${q}`);
 }
 
 export async function getProgress(customerId: string): Promise<ProgressResponse> {
   return fetchAPI<ProgressResponse>(`/customer/${encodeURIComponent(customerId)}/progress`);
+}
+
+export async function ingestTransaction(
+  customerId: string,
+  date: string,
+  type: "inflow" | "outflow",
+  amount: number,
+  description?: string
+): Promise<IngestEventResponse> {
+  return fetchAPI<IngestEventResponse>(`/customer/${encodeURIComponent(customerId)}/ingest/transaction`, {
+    method: "POST",
+    body: JSON.stringify({ date, type, amount, description }),
+  });
+}
+
+export async function ingestDailyBalance(
+  customerId: string,
+  date: string,
+  balance: number,
+  shortfall: number = 0
+): Promise<IngestEventResponse> {
+  return fetchAPI<IngestEventResponse>(`/customer/${encodeURIComponent(customerId)}/ingest/balance`, {
+    method: "POST",
+    body: JSON.stringify({ date, balance, shortfall }),
+  });
+}
+
+export async function ingestBill(
+  customerId: string,
+  dueDate: string,
+  amount: number,
+  paidDate?: string,
+  onTime: number = 1,
+  biller?: string
+): Promise<IngestEventResponse> {
+  return fetchAPI<IngestEventResponse>(`/customer/${encodeURIComponent(customerId)}/ingest/bill`, {
+    method: "POST",
+    body: JSON.stringify({ due_date: dueDate, amount, paid_date: paidDate, on_time: onTime, biller }),
+  });
 }
 
 export async function postConsent(
@@ -355,6 +479,25 @@ export async function postAdminKillSwitch(
 
 export async function getAdminAuditLog(): Promise<AuditLogResponse> {
   return fetchAPI<AuditLogResponse>("/admin/audit-log");
+}
+
+export async function getAdminBaselineTrial(): Promise<TrialEvaluationResponse> {
+  return fetchAPI<TrialEvaluationResponse>("/admin/baseline-trial");
+}
+
+export async function getAdminFunnelAnalytics(): Promise<FunnelAnalyticsResponse> {
+  return fetchAPI<FunnelAnalyticsResponse>("/admin/funnel-analytics");
+}
+
+export async function postFunnelEvent(
+  customerId: string,
+  stage: string,
+  metadata?: Record<string, any>
+): Promise<{ status: string; event_id: number }> {
+  return fetchAPI<{ status: string; event_id: number }>(`/customer/${encodeURIComponent(customerId)}/funnel-event`, {
+    method: "POST",
+    body: JSON.stringify({ stage, metadata }),
+  });
 }
 
 export async function getHealth(): Promise<HealthResponse> {

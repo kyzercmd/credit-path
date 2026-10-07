@@ -48,6 +48,20 @@ class Config:
     # --- Disclaimer ---
     disclaimer: str = "Built on synthetic data. Guidance only, not a loan offer."
 
+    # --- Database & Auth ---
+    database_url: str = field(
+        default_factory=lambda: os.getenv(
+            "DATABASE_URL",
+            f"sqlite:///{Path(__file__).resolve().parent.parent / 'creditpath.db'}",
+        )
+    )
+    admin_api_key: str = field(
+        default_factory=lambda: os.getenv("ADMIN_API_KEY", "creditpath-admin-secret-key-2026")
+    )
+    admin_token: str = field(
+        default_factory=lambda: os.getenv("ADMIN_TOKEN", "creditpath-admin-jwt-token-2026")
+    )
+
     def to_dict(self) -> dict:
         return asdict(self)
 

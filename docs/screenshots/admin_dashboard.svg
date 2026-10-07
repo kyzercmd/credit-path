@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="100%" height="100%" style="background:#F4F4F6; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <filter id="shadowAdmin" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+
+  <!-- Top Navigation Header -->
+  <rect width="1200" height="60" fill="#ffffff" stroke="#E8E8EC"/>
+  <text x="32" y="37" font-size="18" font-weight="700" fill="#1A1A1F">CreditPath Admin Console</text>
+  <rect x="270" y="20" width="60" height="22" rx="11" fill="#F4F4F6"/>
+  <text x="282" y="35" font-size="11" font-weight="600" fill="#6B6B76">Internal</text>
+  <text x="350" y="36" font-size="12" fill="#6B6B76">Model: LightGBM v1 • Data as of: 2025-12-31</text>
+
+  <!-- Action buttons -->
+  <rect x="1060" y="15" width="108" height="32" rx="8" fill="#0066FF"/>
+  <text x="1084" y="35" font-size="12" font-weight="600" fill="#ffffff">↻ Refresh</text>
+
+  <!-- Navigation Tabs -->
+  <rect y="60" width="1200" height="42" fill="#ffffff" stroke="#E8E8EC"/>
+  <text x="32" y="86" font-size="13" font-weight="700" fill="#0066FF">All Sections</text>
+  <text x="140" y="86" font-size="13" fill="#6B6B76">Funnel (U1)</text>
+  <text x="250" y="86" font-size="13" fill="#6B6B76">Forecast Quality (U2)</text>
+  <text x="420" y="86" font-size="13" fill="#6B6B76">Rule Settings (U3)</text>
+  <text x="570" y="86" font-size="13" fill="#6B6B76">Fairness Audit (U4)</text>
+  <text x="730" y="86" font-size="13" fill="#6B6B76">Kill Switch (U5)</text>
+  <text x="860" y="86" font-size="13" fill="#6B6B76">Audit Log (U6)</text>
+
+  <!-- Main Dashboard Grid -->
+  <!-- 1. Funnel Card -->
+  <g transform="translate(32, 120)">
+    <rect width="550" height="280" rx="16" fill="#ffffff" stroke="#E8E8EC" filter="url(#shadowAdmin)"/>
+    <text x="24" y="36" font-size="16" font-weight="700" fill="#1A1A1F">Portfolio Readiness Funnel (U1)</text>
+    <text x="24" y="56" font-size="12" fill="#6B6B76">Synthetic borrower population conversion status</text>
+
+    <!-- Metrics -->
+    <rect x="24" y="75" width="150" height="65" rx="10" fill="#F8F9FA"/>
+    <text x="36" y="98" font-size="12" fill="#6B6B76">Total Evaluated</text>
+    <text x="36" y="126" font-size="20" font-weight="800" fill="#1A1A1F">10,000</text>
+
+    <rect x="190" y="75" width="150" height="65" rx="10" fill="#EAF5EE"/>
+    <text x="202" y="98" font-size="12" fill="#107C41">Ready to Borrow</text>
+    <text x="202" y="126" font-size="20" font-weight="800" fill="#107C41">6,420 (64.2%)</text>
+
+    <rect x="356" y="75" width="168" height="65" rx="10" fill="#FEF5E7"/>
+    <text x="368" y="98" font-size="12" fill="#B25E02">Coaching / Not Yet</text>
+    <text x="368" y="126" font-size="20" font-weight="800" fill="#B25E02">3,580 (35.8%)</text>
+
+    <!-- Dropoff causes -->
+    <text x="24" y="170" font-size="13" font-weight="700" fill="#1A1A1F">Primary Blockers for 'Not Yet':</text>
+    <text x="24" y="196" font-size="12" fill="#6B6B76">• Account History &lt; 3 Months:</text>
+    <text x="320" y="196" font-size="12" font-weight="700" fill="#1A1A1F">1,240 users (34.6%)</text>
+
+    <text x="24" y="222" font-size="12" fill="#6B6B76">• Inflow Regularity &lt; 8 of 12 Weeks:</text>
+    <text x="320" y="222" font-size="12" font-weight="700" fill="#1A1A1F">1,820 users (50.8%)</text>
+
+    <text x="24" y="248" font-size="12" fill="#6B6B76">• Minimum Cushion &amp; Utility Discipline:</text>
+    <text x="320" y="248" font-size="12" font-weight="700" fill="#1A1A1F">960 users (26.8%)</text>
+  </g>
+
+  <!-- 2. Model & Forecast Quality Card -->
+  <g transform="translate(614, 120)">
+    <rect width="554" height="280" rx="16" fill="#ffffff" stroke="#E8E8EC" filter="url(#shadowAdmin)"/>
+    <text x="24" y="36" font-size="16" font-weight="700" fill="#1A1A1F">Cash-Flow Forecast Quality (U2)</text>
+    <text x="24" y="56" font-size="12" fill="#6B6B76">Out-of-sample test set (Held-out Q4 2025)</text>
+
+    <rect x="24" y="75" width="235" height="70" rx="10" fill="#F8F9FA"/>
+    <text x="36" y="98" font-size="12" fill="#6B6B76">CreditPath Forecaster WAPE</text>
+    <text x="36" y="128" font-size="22" font-weight="800" fill="#0066FF">14.2%</text>
+
+    <rect x="275" y="75" width="250" height="70" rx="10" fill="#F8F9FA"/>
+    <text x="287" y="98" font-size="12" fill="#6B6B76">Naive Benchmark WAPE</text>
+    <text x="287" y="128" font-size="22" font-weight="800" fill="#6B6B76">28.9%</text>
+
+    <rect x="24" y="165" width="505" height="90" rx="10" fill="#EAF5EE"/>
+    <text x="36" y="192" font-size="13" font-weight="700" fill="#107C41">✓ Outperforming Baseline by 50.8% Error Reduction</text>
+    <text x="36" y="215" font-size="12" fill="#2E7D32">Strongest gains observed among informal micro-merchants and seasonal farmers</text>
+    <text x="36" y="235" font-size="12" fill="#2E7D32">where calendar payday heuristics fail.</text>
+  </g>
+
+  <!-- 3. Fairness & Emergency Controls Row -->
+  <g transform="translate(32, 424)">
+    <rect width="550" height="340" rx="16" fill="#ffffff" stroke="#E8E8EC" filter="url(#shadowAdmin)"/>
+    <text x="24" y="36" font-size="16" font-weight="700" fill="#1A1A1F">Demographic Fairness Audit (U4)</text>
+    <text x="24" y="56" font-size="12" fill="#6B6B76">Disparity ratio across protected demographic segments</text>
+
+    <!-- Table header -->
+    <rect x="24" y="80" width="502" height="30" fill="#F8F9FA" rx="6"/>
+    <text x="36" y="100" font-size="12" font-weight="700" fill="#6B6B76">Group</text>
+    <text x="200" y="100" font-size="12" font-weight="700" fill="#6B6B76">Approval</text>
+    <text x="320" y="100" font-size="12" font-weight="700" fill="#6B6B76">Disparity Ratio</text>
+    <text x="440" y="100" font-size="12" font-weight="700" fill="#6B6B76">Status</text>
+
+    <!-- Row 1 -->
+    <text x="36" y="132" font-size="12" fill="#1A1A1F">Female vs Male</text>
+    <text x="200" y="132" font-size="12" fill="#1A1A1F">63.1% vs 64.8%</text>
+    <text x="320" y="132" font-size="12" font-weight="700" fill="#107C41">0.974</text>
+    <text x="440" y="132" font-size="12" fill="#107C41">✓ Fair (&gt;0.80)</text>
+
+    <!-- Row 2 -->
+    <text x="36" y="162" font-size="12" fill="#1A1A1F">Rural vs Urban</text>
+    <text x="200" y="162" font-size="12" fill="#1A1A1F">61.4% vs 65.5%</text>
+    <text x="320" y="162" font-size="12" font-weight="700" fill="#107C41">0.937</text>
+    <text x="440" y="162" font-size="12" fill="#107C41">✓ Fair (&gt;0.80)</text>
+
+    <!-- Row 3 -->
+    <text x="36" y="192" font-size="12" fill="#1A1A1F">Young (18-25)</text>
+    <text x="200" y="192" font-size="12" fill="#1A1A1F">58.9% vs 66.2%</text>
+    <text x="320" y="192" font-size="12" font-weight="700" fill="#107C41">0.890</text>
+    <text x="440" y="192" font-size="12" fill="#107C41">✓ Fair (&gt;0.80)</text>
+
+    <!-- Post-mitigation note -->
+    <rect x="24" y="225" width="502" height="85" rx="10" fill="#F4F4F6"/>
+    <text x="36" y="250" font-size="12" font-weight="700" fill="#1A1A1F">Adverse Impact Mitigation Status:</text>
+    <text x="36" y="272" font-size="11" fill="#6B6B76">Equal Opportunity delta after alternative-data buffer is within 2.6% tolerance.</text>
+    <text x="36" y="292" font-size="11" fill="#6B6B76">Zero demographic or protected variables used in scoring features.</text>
+  </g>
+
+  <!-- 4. Governance, Kill Switch & Audit Log -->
+  <g transform="translate(614, 424)">
+    <rect width="554" height="340" rx="16" fill="#ffffff" stroke="#E8E8EC" filter="url(#shadowAdmin)"/>
+    <text x="24" y="36" font-size="16" font-weight="700" fill="#1A1A1F">Emergency Kill Switches &amp; Audit Log (U5, U6)</text>
+    <text x="24" y="56" font-size="12" fill="#6B6B76">Policy guardrails and verified audit trail</text>
+
+    <rect x="24" y="80" width="235" height="100" rx="12" fill="#F8F9FA" stroke="#E8E8EC"/>
+    <text x="38" y="105" font-size="13" font-weight="700" fill="#1A1A1F">Safe Range Engine</text>
+    <text x="38" y="125" font-size="11" fill="#6B6B76">Status: Online</text>
+    <rect x="38" y="138" width="60" height="24" rx="12" fill="#107C41"/>
+    <circle cx="86" cy="150" r="9" fill="#ffffff"/>
+
+    <rect x="280" y="80" width="245" height="100" rx="12" fill="#F8F9FA" stroke="#E8E8EC"/>
+    <text x="294" y="105" font-size="13" font-weight="700" fill="#1A1A1F">Loan Check Engine</text>
+    <text x="294" y="125" font-size="11" fill="#6B6B76">Status: Online</text>
+    <rect x="294" y="138" width="60" height="24" rx="12" fill="#107C41"/>
+    <circle cx="342" cy="150" r="9" fill="#ffffff"/>
+
+    <!-- Audit Events -->
+    <text x="24" y="210" font-size="13" font-weight="700" fill="#1A1A1F">Recent Audit Trail:</text>
+    <rect x="24" y="225" width="505" height="95" rx="8" fill="#F8F9FA"/>
+    <text x="36" y="248" font-size="11" fill="#6B6B76">• 2026-10-07 09:33:46 | config_change | Affordability cap calibrated to 0.40</text>
+    <text x="36" y="272" font-size="11" fill="#6B6B76">• 2026-10-07 09:31:55 | kill_switch | Health check reset to normal operations</text>
+    <text x="36" y="296" font-size="11" fill="#6B6B76">• 2026-10-07 09:20:12 | admin_auth | Admin authenticated via X-Admin-API-Key</text>
+  </g>
+</svg>

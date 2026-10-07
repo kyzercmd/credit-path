@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from app.data.loader import load_data, get_customer_ids
+from app.database import get_live_transactions, get_live_daily_balances, get_live_bills
 
 FEATURE_COLUMNS = [
     "customer_id",
@@ -320,26 +321,106 @@ def _format_feature_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def get_merged_customer_data(customer_id: str | None = None) -> dict[str, pd.DataFrame]:
+    """
+    Load base parquet tables and merge with any live ingested events from SQL database.
+    If customer_id is provided, only retrieves live records for that customer to optimize performance.
+    """
+    base_data = load_data()
+    
+    # 1. Transactions
+    base_tx = base_data["transactions"]
+    if customer_id is not None:
+        base_tx = base_tx[base_tx["customer_id"] == customer_id].copy()
+    else:
+        base_tx = base_tx.copy()
+
+    try:
+        live_tx_list = get_live_transactions(customer_id)
+    except Exception:
+        live_tx_list = []
+
+    if live_tx_list:
+        live_tx_df = pd.DataFrame(live_tx_list)[["customer_id", "date", "type", "amount"]]
+        live_tx_df["date"] = pd.to_datetime(live_tx_df["date"])
+        merged_tx = pd.concat([base_tx, live_tx_df], ignore_index=True)
+    else:
+        merged_tx = base_tx
+
+    # 2. Daily balances
+    base_bal = base_data["daily_balances"]
+    if customer_id is not None:
+        base_bal = base_bal[base_bal["customer_id"] == customer_id].copy()
+    else:
+        base_bal = base_bal.copy()
+
+    try:
+        live_bal_list = get_live_daily_balances(customer_id)
+    except Exception:
+        live_bal_list = []
+
+    if live_bal_list:
+        live_bal_df = pd.DataFrame(live_bal_list)[["customer_id", "date", "balance", "shortfall"]]
+        live_bal_df["date"] = pd.to_datetime(live_bal_df["date"])
+        # If dates collide, live balance takes precedence over base
+        merged_bal = pd.concat([base_bal, live_bal_df], ignore_index=True)
+        merged_bal = merged_bal.drop_duplicates(subset=["customer_id", "date"], keep="last")
+    else:
+        merged_bal = base_bal
+
+    # 3. Bills
+    base_bi = base_data["bills"]
+    if customer_id is not None:
+        base_bi = base_bi[base_bi["customer_id"] == customer_id].copy()
+    else:
+        base_bi = base_bi.copy()
+
+    try:
+        live_bi_list = get_live_bills(customer_id)
+    except Exception:
+        live_bi_list = []
+
+    if live_bi_list:
+        live_bi_df = pd.DataFrame(live_bi_list)[["customer_id", "due_date", "amount", "paid_date", "on_time"]]
+        live_bi_df["due_date"] = pd.to_datetime(live_bi_df["due_date"])
+        if "paid_date" in live_bi_df.columns:
+            live_bi_df["paid_date"] = pd.to_datetime(live_bi_df["paid_date"])
+        # Ensure on_time is boolean
+        live_bi_df["on_time"] = live_bi_df["on_time"].astype(bool)
+        merged_bi = pd.concat([base_bi, live_bi_df], ignore_index=True)
+        merged_bi = merged_bi.drop_duplicates(subset=["customer_id", "due_date"], keep="last")
+    else:
+        merged_bi = base_bi
+
+    return {
+        "customers": base_data["customers"],
+        "transactions": merged_tx,
+        "daily_balances": merged_bal,
+        "bills": merged_bi,
+        "customer_attributes": base_data.get("customer_attributes"),
+    }
+
+
 def build_customer_features(
     customer_id: str,
     cutoff_date: str | datetime.date | datetime.datetime | pd.Timestamp = "2025-12-31",
 ) -> pd.DataFrame:
     """
-    Build weekly feature matrix for a single customer from saved parquet data.
+    Build weekly feature matrix for a single customer from merged parquet and live data.
 
     Parameters
     ----------
     customer_id : str
         Customer identifier.
     cutoff_date : str | datetime | pd.Timestamp
-        Cutoff date for features (default: '2025-12-31').
+        Cutoff date for features (default: '2025-12-31' or dynamic as-of).
 
     Returns
     -------
     pd.DataFrame
         DataFrame of weekly features for the specified customer.
     """
-    data = load_data()
+    data = get_merged_customer_data(customer_id)
     return build_features(
         data["transactions"],
         data["daily_balances"],
@@ -380,3 +461,32 @@ def build_training_features(
         cutoff_date=cutoff_date,
         customer_ids=train_cids,
     )
+
+
+def get_customer_as_of_date(customer_id: str, default_date: str = "2025-12-31") -> str:
+    """
+    Determine dynamic as-of date for a customer based on their latest transaction,
+    daily balance, or bill date (including live ingested events).
+    """
+    data = get_merged_customer_data(customer_id)
+    latest_timestamps = []
+
+    tx = data.get("transactions")
+    if tx is not None and len(tx) > 0:
+        latest_timestamps.append(pd.to_datetime(tx["date"]).max())
+
+    bal = data.get("daily_balances")
+    if bal is not None and len(bal) > 0:
+        latest_timestamps.append(pd.to_datetime(bal["date"]).max())
+
+    bi = data.get("bills")
+    if bi is not None and len(bi) > 0:
+        latest_timestamps.append(pd.to_datetime(bi["due_date"]).max())
+
+    default_ts = pd.to_datetime(default_date)
+    if not latest_timestamps:
+        return default_date
+
+    max_ts = max(latest_timestamps)
+    res_ts = max(max_ts, default_ts)
+    return res_ts.strftime("%Y-%m-%d")

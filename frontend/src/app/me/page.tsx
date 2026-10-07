@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Footer } from "@/components/Footer";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { EventSimulator } from "@/components/EventSimulator";
 import {
   ShieldCheck,
   User,
@@ -179,6 +180,9 @@ export default function MePage() {
           </div>
         </div>
       </Card>
+
+      {/* Live Event Simulator & Ingestion Studio */}
+      <EventSimulator customerId={customerId} />
 
       {/* Card 4: Privacy & Ethics (F10) */}
       <Card

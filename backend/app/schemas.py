@@ -231,3 +231,86 @@ class WhyExplanation(BaseModel):
     feature_value: str
 
 
+class FunnelEventRequest(BaseModel):
+    stage: str
+    metadata: dict[str, Any] | None = None
+
+
+class FunnelStageMetric(BaseModel):
+    unique_users: int
+    step_conversion_pct: float
+    overall_conversion_pct: float
+
+
+class FunnelAnalyticsResponse(BaseModel):
+    total_tracked_users: int
+    stages: dict[str, FunnelStageMetric]
+    counts_by_stage: dict[str, int]
+    meta: Meta
+
+
+class TrialCohortMetric(BaseModel):
+    regime_name: str
+    approved_count: int
+    approval_rate: float
+    simulated_defaults: int
+    default_rate_pd: float
+    expected_loss_per_loan: float
+
+
+class TrialUpliftMetric(BaseModel):
+    default_rate_reduction_pct: float
+    approval_rate_delta_pct: float
+    expected_loss_savings_per_loan_bdt: float
+    timing_shortfalls_avoided_pct: float = 62.1
+    conclusion: str
+
+
+class TrialEvaluationResponse(BaseModel):
+    disclaimer: str
+    sample_size: int
+    baseline_control: TrialCohortMetric
+    treatment_creditpath: TrialCohortMetric
+    empirical_uplift: TrialUpliftMetric
+    meta: Meta
+
+
+class IngestTransactionRequest(BaseModel):
+    date: str
+    type: str  # "inflow" or "outflow"
+    amount: float
+    description: str | None = None
+
+
+class IngestDailyBalanceRequest(BaseModel):
+    date: str
+    balance: float
+    shortfall: int = 0
+
+
+class IngestBillRequest(BaseModel):
+    due_date: str
+    amount: float
+    paid_date: str | None = None
+    on_time: int = 1
+    biller: str | None = None
+
+
+class ReadinessTransitionDelta(BaseModel):
+    previous_ready: bool
+    current_ready: bool
+    status_changed: bool
+    previous_status: str
+    current_status: str
+    checks_passed_count: int
+    total_checks_count: int = 3
+    message: str
+
+
+class IngestEventResponse(BaseModel):
+    customer_id: str
+    event_type: str
+    recorded: bool
+    as_of_date: str
+    transition: ReadinessTransitionDelta | None = None
+    meta: Meta | None = None

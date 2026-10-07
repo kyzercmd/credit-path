@@ -1,21 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ConsentProvider } from "@/contexts/ConsentContext";
 import { BottomNav } from "@/components/BottomNav";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const notoSansBengali = Noto_Sans_Bengali({
-  subsets: ["bengali"],
-  variable: "--font-noto-bengali",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "CreditPath — Loan Readiness Coach",
@@ -28,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${notoSansBengali.variable}`}>
+    <html lang="en">
       <body className="min-h-screen bg-[#F4F4F6] text-[#1A1A1F] font-sans antialiased">
         <LanguageProvider>
           <ConsentProvider>

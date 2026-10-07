@@ -15,28 +15,41 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 import pandas as pd
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.config import Config, get_config
 from app.data.loader import get_customer_ids, load_data
-from app.database import get_consent_status, log_consent
+from app.database import (
+    get_consent_status,
+    log_consent,
+    log_funnel_event,
+    insert_live_transaction,
+    insert_live_daily_balance,
+    insert_live_bill,
+)
 from app.engines.ready import ReadyEngine, evaluate_customer
 from app.engines.affordability import calculate_safe_range, evaluate_loan_check
 from app.engines.timing import generate_calendar_forecast
 from app.engines.recourse import compute_recourse_path
-from app.features.builder import build_customer_features
+from app.features.builder import build_customer_features, get_customer_as_of_date, get_merged_customer_data
 from app.ml.model_store import get_data_as_of, get_model_version
 from app.schemas import (
     CalendarResponse,
     CheckHistory,
     ConsentRequest,
     ConsentResponse,
+    FunnelEventRequest,
     HeadsUpCard,
+    IngestBillRequest,
+    IngestDailyBalanceRequest,
+    IngestEventResponse,
+    IngestTransactionRequest,
     LoanCheckRequest,
     LoanCheckResponse,
     Meta,
     PathResponse,
     ProgressResponse,
+    ReadinessTransitionDelta,
     SafeRangeResponse,
     StatusResponse,
 )
@@ -78,36 +91,48 @@ def verify_coach_consent(customer_id: str) -> None:
         )
 
 
-def get_meta(cfg: Config) -> Meta:
-    """Construct standard Meta payload."""
+def get_meta(cfg: Config, as_of: str | None = None) -> Meta:
+    """Construct standard Meta payload with dynamic as_of date support."""
+    data_date = as_of or get_data_as_of()
     return Meta(
         model_version=get_model_version("forecaster"),
-        data_as_of=get_data_as_of(),
+        data_as_of=data_date,
         disclaimer=cfg.disclaimer,
     )
 
 
 @router.get("/{customer_id}/status", response_model=StatusResponse)
-def get_customer_status(customer_id: str) -> StatusResponse:
-    """Evaluate overall readiness and policy checks."""
+def get_customer_status(
+    customer_id: str,
+    as_of: str | None = Query(None, description="Optional dynamic as-of date (YYYY-MM-DD). If omitted, inferred from latest live/historical data."),
+) -> StatusResponse:
+    """Evaluate overall readiness and policy checks with dynamic as-of support."""
     verify_customer_exists(customer_id)
     verify_coach_consent(customer_id)
 
     cfg = get_config()
-    result = evaluate_customer(customer_id, config=cfg)
+    target_cutoff = as_of or get_customer_as_of_date(customer_id)
+    result = evaluate_customer(customer_id, config=cfg, cutoff_date=target_cutoff)
+    try:
+        log_funnel_event(customer_id, "profile_viewed", {"ready": result.ready, "as_of": target_cutoff})
+    except Exception:
+        pass
     return StatusResponse(
         customer_id=customer_id,
         ready=result.ready,
         status_label=result.status_label,
         status_sentence=result.status_sentence,
         checks=result.checks,
-        meta=get_meta(cfg),
+        meta=get_meta(cfg, as_of=target_cutoff),
     )
 
 
 @router.get("/{customer_id}/safe-range", response_model=SafeRangeResponse)
-def get_customer_safe_range(customer_id: str) -> SafeRangeResponse:
-    """Compute safe monthly payment ranges for ready customers."""
+def get_customer_safe_range(
+    customer_id: str,
+    as_of: str | None = Query(None, description="Optional dynamic as-of date (YYYY-MM-DD)."),
+) -> SafeRangeResponse:
+    """Compute safe monthly payment ranges for ready customers with dynamic as-of support."""
     verify_customer_exists(customer_id)
     verify_coach_consent(customer_id)
 
@@ -118,15 +143,16 @@ def get_customer_safe_range(customer_id: str) -> SafeRangeResponse:
             detail=KILL_SAFE_RANGE_DETAIL,
         )
 
+    target_cutoff = as_of or get_customer_as_of_date(customer_id)
     # Only ready customers can calculate safe range
-    ready_result = evaluate_customer(customer_id, config=cfg)
+    ready_result = evaluate_customer(customer_id, config=cfg, cutoff_date=target_cutoff)
     if not ready_result.ready:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Safe repayment range is available once you become Ready. Check your path to get ready.",
         )
 
-    range_result = calculate_safe_range(customer_id, config=cfg)
+    range_result = calculate_safe_range(customer_id, config=cfg, cutoff_date=target_cutoff)
     return SafeRangeResponse(
         customer_id=customer_id,
         monthly_low=range_result.monthly_low,
@@ -135,6 +161,7 @@ def get_customer_safe_range(customer_id: str) -> SafeRangeResponse:
         stressed_high=range_result.stressed_high,
         basis_months=range_result.basis_months,
         basis_sentence=range_result.basis_sentence,
+        meta=get_meta(cfg, as_of=target_cutoff),
         low_confidence=range_result.low_confidence,
         meta=get_meta(cfg),
     )
@@ -144,8 +171,9 @@ def get_customer_safe_range(customer_id: str) -> SafeRangeResponse:
 def post_customer_loan_check(
     customer_id: str,
     payload: LoanCheckRequest,
+    as_of: str | None = Query(None, description="Optional dynamic as-of date (YYYY-MM-DD)."),
 ) -> LoanCheckResponse:
-    """Evaluate specific loan proposal against cash flow and policy stress test."""
+    """Evaluate specific loan proposal against cash flow and policy stress test with dynamic as-of support."""
     verify_customer_exists(customer_id)
     verify_coach_consent(customer_id)
 
@@ -156,16 +184,18 @@ def post_customer_loan_check(
             detail=KILL_LOAN_CHECK_DETAIL,
         )
 
+    target_cutoff = as_of or get_customer_as_of_date(customer_id)
     loan_result = evaluate_loan_check(
         customer_id=customer_id,
         amount=payload.amount,
         tenor_months=payload.tenor_months,
         config=cfg,
+        cutoff_date=target_cutoff,
         financing_structure=payload.financing_structure,
         total_repayment=payload.total_repayment,
         provider_fees=payload.provider_fees,
     )
-    return LoanCheckResponse(
+    response = LoanCheckResponse(
         customer_id=customer_id,
         amount=loan_result.amount,
         tenor_months=loan_result.tenor_months,
@@ -179,18 +209,36 @@ def post_customer_loan_check(
         stress_verdict=loan_result.stress_verdict,
         stress_reason=loan_result.stress_reason,
         nearest_comfortable=loan_result.nearest_comfortable,
-        meta=get_meta(cfg),
+        meta=get_meta(cfg, as_of=target_cutoff),
     )
+    try:
+        log_funnel_event(
+            customer_id,
+            "loan_check_performed",
+            {
+                "amount": loan_result.amount,
+                "tenor_months": loan_result.tenor_months,
+                "verdict": loan_result.verdict,
+                "as_of": target_cutoff,
+            },
+        )
+    except Exception:
+        pass
+    return response
 
 
 @router.get("/{customer_id}/calendar", response_model=CalendarResponse)
-def get_customer_calendar(customer_id: str) -> CalendarResponse:
-    """Generate weekly cash-flow forecast and optimal repayment windows."""
+def get_customer_calendar(
+    customer_id: str,
+    as_of: str | None = Query(None, description="Optional dynamic as-of date (YYYY-MM-DD)."),
+) -> CalendarResponse:
+    """Generate weekly cash-flow forecast and optimal repayment windows with dynamic as-of support."""
     verify_customer_exists(customer_id)
     verify_coach_consent(customer_id)
 
     cfg = get_config()
-    cal_result = generate_calendar_forecast(customer_id, config=cfg)
+    target_cutoff = as_of or get_customer_as_of_date(customer_id)
+    cal_result = generate_calendar_forecast(customer_id, config=cfg, cutoff_date=target_cutoff)
 
     # Determine heads-up card if any week is projected as tight
     heads_up: HeadsUpCard | None = None
@@ -209,23 +257,32 @@ def get_customer_calendar(customer_id: str) -> CalendarResponse:
         recommended_window=cal_result.recommended_window,
         avoid_weeks=cal_result.avoid_weeks,
         heads_up=heads_up,
+        meta=get_meta(cfg, as_of=target_cutoff),
         low_confidence=cal_result.low_confidence,
         meta=get_meta(cfg),
     )
 
 
 @router.get("/{customer_id}/path", response_model=PathResponse)
-def get_customer_path(customer_id: str) -> PathResponse:
-    """Compute actionable steps for missing readiness checks."""
+def get_customer_path(
+    customer_id: str,
+    as_of: str | None = Query(None, description="Optional dynamic as-of date (YYYY-MM-DD)."),
+) -> PathResponse:
+    """Compute actionable steps for missing readiness checks with dynamic as-of support."""
     verify_customer_exists(customer_id)
     verify_coach_consent(customer_id)
 
     cfg = get_config()
-    path_result = compute_recourse_path(customer_id, config=cfg)
+    target_cutoff = as_of or get_customer_as_of_date(customer_id)
+    path_result = compute_recourse_path(customer_id, config=cfg, cutoff_date=target_cutoff)
+    try:
+        log_funnel_event(customer_id, "path_explored", {"missing_count": len(path_result.missing_items), "as_of": target_cutoff})
+    except Exception:
+        pass
     return PathResponse(
         customer_id=customer_id,
         missing_items=path_result.missing_items,
-        meta=get_meta(cfg),
+        meta=get_meta(cfg, as_of=target_cutoff),
     )
 
 
@@ -339,4 +396,153 @@ def post_customer_consent(
         action=action,
         recorded=True,
         meta=get_meta(cfg),
+    )
+
+
+@router.post("/{customer_id}/funnel-event")
+def post_customer_funnel_event(
+    customer_id: str,
+    payload: FunnelEventRequest,
+) -> dict[str, Any]:
+    """Record a user conversion funnel milestone (e.g., action_plan_committed, credit_converted)."""
+    verify_customer_exists(customer_id)
+    log_funnel_event(customer_id, payload.stage, payload.metadata)
+    return {
+        "customer_id": customer_id,
+        "stage": payload.stage,
+        "recorded": True,
+    }
+
+
+def _compute_readiness_delta(customer_id: str, before_eval, after_eval) -> ReadinessTransitionDelta:
+    status_changed = (before_eval.ready != after_eval.ready) or (before_eval.status_label != after_eval.status_label)
+    passed_count = sum(1 for c in after_eval.checks if c.passed)
+    
+    if before_eval.ready != after_eval.ready:
+        if after_eval.ready:
+            msg = "Congratulations! This event fulfilled your final policy check and unlocked credit readiness."
+        else:
+            msg = "Caution: This event reduced your financial cushion or regularity below policy readiness thresholds."
+    elif status_changed:
+        msg = f"Status updated from '{before_eval.status_label}' to '{after_eval.status_label}'."
+    else:
+        msg = f"Readiness confirmed: {passed_count}/3 policy checks passing ({after_eval.status_label})."
+
+    return ReadinessTransitionDelta(
+        previous_ready=before_eval.ready,
+        current_ready=after_eval.ready,
+        status_changed=status_changed,
+        previous_status=before_eval.status_label,
+        current_status=after_eval.status_label,
+        checks_passed_count=passed_count,
+        total_checks_count=3,
+        message=msg,
+    )
+
+
+@router.post("/{customer_id}/ingest/transaction", response_model=IngestEventResponse)
+def post_customer_ingest_transaction(
+    customer_id: str,
+    payload: IngestTransactionRequest,
+) -> IngestEventResponse:
+    """Ingest a real-time banking/MFS transaction and compute dynamic readiness transition."""
+    verify_customer_exists(customer_id)
+    verify_coach_consent(customer_id)
+
+    cfg = get_config()
+    # Baseline readiness before ingestion
+    prior_cutoff = get_customer_as_of_date(customer_id)
+    before_eval = evaluate_customer(customer_id, config=cfg, cutoff_date=prior_cutoff)
+
+    # Ingest event into SQL persistence
+    insert_live_transaction(
+        customer_id=customer_id,
+        date=payload.date,
+        tx_type=payload.type,
+        amount=payload.amount,
+        description=payload.description,
+    )
+
+    # Post-ingestion readiness evaluation
+    new_cutoff = get_customer_as_of_date(customer_id)
+    after_eval = evaluate_customer(customer_id, config=cfg, cutoff_date=new_cutoff)
+    delta = _compute_readiness_delta(customer_id, before_eval, after_eval)
+
+    return IngestEventResponse(
+        customer_id=customer_id,
+        event_type="transaction",
+        recorded=True,
+        as_of_date=new_cutoff,
+        transition=delta,
+        meta=get_meta(cfg, as_of=new_cutoff),
+    )
+
+
+@router.post("/{customer_id}/ingest/balance", response_model=IngestEventResponse)
+def post_customer_ingest_balance(
+    customer_id: str,
+    payload: IngestDailyBalanceRequest,
+) -> IngestEventResponse:
+    """Ingest a real-time daily closing balance and evaluate cushion/readiness transition."""
+    verify_customer_exists(customer_id)
+    verify_coach_consent(customer_id)
+
+    cfg = get_config()
+    prior_cutoff = get_customer_as_of_date(customer_id)
+    before_eval = evaluate_customer(customer_id, config=cfg, cutoff_date=prior_cutoff)
+
+    insert_live_daily_balance(
+        customer_id=customer_id,
+        date=payload.date,
+        balance=payload.balance,
+        shortfall=payload.shortfall,
+    )
+
+    new_cutoff = get_customer_as_of_date(customer_id)
+    after_eval = evaluate_customer(customer_id, config=cfg, cutoff_date=new_cutoff)
+    delta = _compute_readiness_delta(customer_id, before_eval, after_eval)
+
+    return IngestEventResponse(
+        customer_id=customer_id,
+        event_type="daily_balance",
+        recorded=True,
+        as_of_date=new_cutoff,
+        transition=delta,
+        meta=get_meta(cfg, as_of=new_cutoff),
+    )
+
+
+@router.post("/{customer_id}/ingest/bill", response_model=IngestEventResponse)
+def post_customer_ingest_bill(
+    customer_id: str,
+    payload: IngestBillRequest,
+) -> IngestEventResponse:
+    """Ingest a utility/telco bill payment and evaluate bill discipline/readiness transition."""
+    verify_customer_exists(customer_id)
+    verify_coach_consent(customer_id)
+
+    cfg = get_config()
+    prior_cutoff = get_customer_as_of_date(customer_id)
+    before_eval = evaluate_customer(customer_id, config=cfg, cutoff_date=prior_cutoff)
+
+    insert_live_bill(
+        customer_id=customer_id,
+        due_date=payload.due_date,
+        amount=payload.amount,
+        paid_date=payload.paid_date,
+        on_time=payload.on_time,
+        biller=payload.biller,
+    )
+
+    new_cutoff = get_customer_as_of_date(customer_id)
+    after_eval = evaluate_customer(customer_id, config=cfg, cutoff_date=new_cutoff)
+    delta = _compute_readiness_delta(customer_id, before_eval, after_eval)
+
+    return IngestEventResponse(
+        customer_id=customer_id,
+        event_type="bill",
+        recorded=True,
+        as_of_date=new_cutoff,
+        transition=delta,
+        meta=get_meta(cfg, as_of=new_cutoff),
     )
