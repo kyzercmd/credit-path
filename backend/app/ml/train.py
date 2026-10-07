@@ -15,10 +15,17 @@ from __future__ import annotations
 import argparse
 import datetime
 from pathlib import Path
+import sys
 from typing import Any
 import numpy as np
 import pandas as pd
 from sklearn.metrics import brier_score_loss, roc_auc_score
+
+if sys.stdout.encoding != "utf-8":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 from app.data.loader import get_customer_ids, load_data
 from app.features.builder import build_features, build_training_features

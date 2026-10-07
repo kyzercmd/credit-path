@@ -49,12 +49,18 @@ export interface SafeRangeResponse {
   stressed_high: number;
   basis_months: number;
   basis_sentence: string;
+  low_confidence?: boolean;
   meta: Meta;
 }
+
+export type FinancingStructure = "conventional" | "fixed_payment" | "interest_free";
 
 export interface LoanCheckRequest {
   amount: number;
   tenor_months: number;
+  financing_structure?: FinancingStructure;
+  total_repayment?: number; // fixed_payment only
+  provider_fees?: number; // interest_free only
 }
 
 export interface NearestComfortable {
@@ -67,8 +73,10 @@ export interface LoanCheckResponse {
   customer_id: string;
   amount: number;
   tenor_months: number;
+  financing_structure: FinancingStructure;
   monthly_payment: number;
   total_repayment: number;
+  extra_cost: number;
   surplus_share: number;
   verdict: "Comfortable" | "Tight" | "Too much" | string;
   verdict_reason: string;
@@ -99,6 +107,7 @@ export interface CalendarResponse {
   recommended_window: string;
   avoid_weeks: string[];
   heads_up: HeadsUpCard | null;
+  low_confidence?: boolean;
   meta: Meta;
 }
 
@@ -360,8 +369,12 @@ export async function postLoanCheck(
 ): Promise<LoanCheckResponse> {
   const q = asOf ? `?as_of=${encodeURIComponent(asOf)}` : "";
   return fetchAPI<LoanCheckResponse>(`/customer/${encodeURIComponent(customerId)}/loan-check${q}`, {
+  financing?: Pick<LoanCheckRequest, "financing_structure" | "total_repayment" | "provider_fees">
+): Promise<LoanCheckResponse> {
+  const body: LoanCheckRequest = { amount, tenor_months: tenorMonths, ...(financing ?? {}) };
+  return fetchAPI<LoanCheckResponse>(`/customer/${encodeURIComponent(customerId)}/loan-check`, {
     method: "POST",
-    body: JSON.stringify({ amount, tenor_months: tenorMonths }),
+    body: JSON.stringify(body),
   });
 }
 

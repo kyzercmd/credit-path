@@ -1,6 +1,6 @@
 # CreditPath 🇧🇩
 
-> **A safe borrowing path for micro-merchants and the unbanked in Bangladesh.**  
+> **A safe borrowing path for Daily and weekly earners and women-led households with regular but uneven income who can afford a loan but miss payment timing in Bangladesh.**  
 > Responsible credit-readiness guidance and repayment-timing coaching, not predatory credit scoring.
 
 [![Backend Tests](https://img.shields.io/badge/backend%20tests-67%20passed-brightgreen.svg)]()
@@ -14,23 +14,24 @@
 ## 📋 Table of Contents
 
 1. [Overview & Problem Statement](#overview--problem-statement)
-2. [Business/customer impact and prototype quality](#businesscustomer-impact-and-prototype-quality)
-3. [System Architecture](#system-architecture)
-4. [Core Pillars & Capabilities](#core-pillars--capabilities)
-5. [Empirical Evaluation Summary (Section 8)](#empirical-evaluation-summary-section-8)
-6. [Quick Start & Setup](#quick-start--setup)
-7. [API Reference](#api-reference)
-8. [Testing & Quality Assurance](#testing--quality-assurance)
-9. [Ethical AI, Privacy & Regulatory Compliance](#ethical-ai-privacy--regulatory-compliance)
+2. [Why CreditPath](#why-creditpath)
+3. [Target Beneficiaries & Persona Tiers](#target-beneficiaries--persona-tiers)
+4. [System Architecture](#system-architecture)
+5. [Core Pillars & Capabilities](#core-pillars--capabilities)
+6. [Empirical Evaluation Summary (Section 8)](#empirical-evaluation-summary-section-8)
+7. [Quick Start & Setup](#quick-start--setup)
+8. [API Reference](#api-reference)
+9. [Testing & Quality Assurance](#testing--quality-assurance)
+10. [Ethical AI, Privacy & Regulatory Compliance](#ethical-ai-privacy--regulatory-compliance)
 
 ---
 
 ## 🎯 Overview & Problem Statement
 
-In emerging economies such as Bangladesh, informal micro-merchants, daily wage workers, seasonal agricultural laborers, and women-led households face severe barriers to formal financial systems:
+In emerging economies such as Bangladesh, daily and weekly wage earners, informal workers, and women-led households face severe barriers to formal financial systems:
 
 * **Predatory Digital Lending**: High-interest digital lenders evaluate opaque signals or device telemetry to extend high-risk micro-loans, trapping unbanked borrowers in debt cycles.
-* **Lack of Formal Credit Bureau Records**: Informal traders transact primarily in mobile money (bKash/Nagad) or physical cash, leaving them invisible to traditional credit scoring.
+* **Lack of Formal Credit Bureau Records**: Informal earners transact primarily in mobile money (bKash/Nagad/upay) or physical cash, leaving them invisible to traditional credit scoring despite regular earning ability.
 * **Lending vs. Guidance**: Traditional credit scores answer *"Will this person pay back the lender?"* CreditPath flips the paradigm to answer:
   > *"Is this borrower in a healthy position to take credit right now? If so, what repayment schedule is truly safe and sustainable? If not, what concrete actions will make them ready?"*
 
@@ -94,7 +95,7 @@ CreditPath is engineered as a decoupled modern stack with distinct customer coac
 │  • 3-Check Readiness Status      │  • Forecast Quality vs Baseline     │
 │  • Safe Repayment Range          │  • Fairness Disparity Audit         │
 │  • Loan Check Simulator          │  • Dynamic Threshold Config         │
-│  • 12-Week Repayment Calendar    │  • Emergency Kill Switches          │
+│  • 8-Week Repayment Calendar     │  • Emergency Kill Switches          │
 │  • Path to Ready Recourse        │  • Immutable Audit Trail            │
 └──────────────────────────────────┴─────────────────────────────────────┘
                                   ▲
@@ -159,13 +160,13 @@ $$\text{Max Safe Repayment} = \min\left(\text{Monthly Free Cash Flow} \times \te
 * Guarantees the borrower will not default even under sudden seasonal downturns or medical emergencies.
 
 ### 3. Loan Check Simulator (Jargon-Free Alternatives)
-Micro-merchants can test any proposed loan amount (e.g., ৳10,000) and tenure (e.g., 3 months):
+Borrowers can test any proposed loan amount (e.g., ৳10,000) and tenure (e.g., 3 months):
 * **Instant Verdicts**: `Comfortable` (green), `Borderline` (amber), or `Too High` (rose).
 * **Plain Language Explanations**: Explains cash flow impacts without terms like *debt-to-income*, *amortization*, or *EIR*.
 * **Nearest Comfortable Alternatives**: If an installment is too high, the engine computes alternative loans with longer tenures or lower principals that fit within the safe range.
 
-### 4. 12-Week Cash Flow Forecasting & Repayment Timing
-* Dual LightGBM models forecast expected weekly inflows and outflows over a 12-week forward window.
+### 4. 8-Week Cash Flow Forecasting & Repayment Timing
+* Dual LightGBM models forecast expected weekly inflows and outflows over an 8-week forward window.
 * Recommends optimal repayment weeks (marked green in the calendar) and flags high-risk weeks (e.g. pre-harvest periods or lean seasonal stretches).
 * Prevents scheduled collections during weeks with negative projected net cash flow.
 

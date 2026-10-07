@@ -94,6 +94,14 @@ export default function CalendarPage() {
         </p>
       </div>
 
+      {/* Low confidence notice */}
+      {data.low_confidence && (
+        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+          <span>{t("calendar.low_confidence_notice")}</span>
+        </div>
+      )}
+
       {/* Heads-up Card (F6) if present */}
       {data.heads_up && (
         <HeadsUpCard

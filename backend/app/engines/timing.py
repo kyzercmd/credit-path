@@ -27,6 +27,7 @@ class CalendarResult:
     recommended_window: str
     avoid_weeks: list[str]
     meta: Meta
+    low_confidence: bool = False
 
 
 class TimingEngine:
@@ -103,11 +104,26 @@ class TimingEngine:
             disclaimer=cfg.disclaimer,
         )
 
+        # Determine if customer belongs to a low-confidence forecasting persona cohort
+        low_confidence = False
+        try:
+            from app.api.admin import get_forecast_quality
+            cust_df = data.get("customers")
+            if cust_df is not None:
+                row = cust_df[cust_df["customer_id"] == customer_id]
+                if len(row) > 0:
+                    persona = str(row["persona"].iloc[0])
+                    fq = get_forecast_quality()
+                    low_confidence = bool(fq.by_persona.get(persona, {}).get("low_confidence", False))
+        except Exception:
+            low_confidence = False
+
         return CalendarResult(
             customer_id=customer_id,
             weeks=week_forecasts,
             recommended_window=recommended_window,
             avoid_weeks=avoid_weeks,
+            low_confidence=low_confidence,
             meta=meta,
         )
 

@@ -162,6 +162,8 @@ def get_customer_safe_range(
         basis_months=range_result.basis_months,
         basis_sentence=range_result.basis_sentence,
         meta=get_meta(cfg, as_of=target_cutoff),
+        low_confidence=range_result.low_confidence,
+        meta=get_meta(cfg),
     )
 
 
@@ -189,13 +191,18 @@ def post_customer_loan_check(
         tenor_months=payload.tenor_months,
         config=cfg,
         cutoff_date=target_cutoff,
+        financing_structure=payload.financing_structure,
+        total_repayment=payload.total_repayment,
+        provider_fees=payload.provider_fees,
     )
     response = LoanCheckResponse(
         customer_id=customer_id,
         amount=loan_result.amount,
         tenor_months=loan_result.tenor_months,
+        financing_structure=loan_result.financing_structure,
         monthly_payment=loan_result.monthly_payment,
         total_repayment=loan_result.total_repayment,
+        extra_cost=loan_result.extra_cost,
         surplus_share=loan_result.surplus_share,
         verdict=loan_result.verdict,
         verdict_reason=loan_result.verdict_reason,
@@ -251,6 +258,8 @@ def get_customer_calendar(
         avoid_weeks=cal_result.avoid_weeks,
         heads_up=heads_up,
         meta=get_meta(cfg, as_of=target_cutoff),
+        low_confidence=cal_result.low_confidence,
+        meta=get_meta(cfg),
     )
 
 

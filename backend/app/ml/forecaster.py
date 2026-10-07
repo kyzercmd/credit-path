@@ -22,16 +22,75 @@ FORECASTER_FEATURES = [
     "lag_4_inflow",
     "lag_1_outflow",
     "lag_2_outflow",
+    "lag_3_outflow",
+    "lag_4_outflow",
+    "inflow_roll_mean_4",
+    "inflow_roll_std_4",
+    "outflow_roll_mean_4",
+    "outflow_roll_std_4",
     "lag_1_balance",
     "balance_mean",
     "balance_min",
     "income_regularity_ratio",
+    "day_of_week_mode",
+    "day_of_month",
     "week_of_month",
     "month",
     "is_month_end",
     "is_eid_period",
     "is_harvest_period",
 ]
+
+
+class SeasonalNaiveForecaster:
+    """
+    Seasonal naive baseline forecaster (same period in previous monthly cycle, ~4 weeks ago).
+    """
+
+    def __init__(self, seasonal_lag: int = 4) -> None:
+        self.seasonal_lag = seasonal_lag
+        self.is_fitted = True
+
+    def fit(
+        self,
+        X: pd.DataFrame | None = None,
+        y_inflow: pd.Series | None = None,
+        y_outflow: pd.Series | None = None,
+    ) -> SeasonalNaiveForecaster:
+        """Fit method for compatibility with estimator interface."""
+        self.is_fitted = True
+        return self
+
+    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Predict next week inflow and outflow from the seasonal cycle (4 weeks prior)."""
+        col_in = f"lag_{self.seasonal_lag}_inflow"
+        col_out = f"lag_{self.seasonal_lag}_outflow"
+
+        if col_in in X.columns:
+            inflow = X[col_in].fillna(0.0).to_numpy()
+        elif "lag_1_inflow" in X.columns:
+            inflow = X["lag_1_inflow"].fillna(0.0).to_numpy()
+        elif "weekly_inflow" in X.columns:
+            inflow = X["weekly_inflow"].fillna(0.0).to_numpy()
+        else:
+            inflow = np.zeros(len(X))
+
+        if col_out in X.columns:
+            outflow = X[col_out].fillna(0.0).to_numpy()
+        elif "lag_1_outflow" in X.columns:
+            outflow = X["lag_1_outflow"].fillna(0.0).to_numpy()
+        elif "weekly_outflow" in X.columns:
+            outflow = X["weekly_outflow"].fillna(0.0).to_numpy()
+        else:
+            outflow = np.zeros(len(X))
+
+        return pd.DataFrame(
+            {
+                "predicted_inflow": np.clip(inflow, 0.0, None),
+                "predicted_outflow": np.clip(outflow, 0.0, None),
+            },
+            index=X.index,
+        )
 
 
 class NaiveForecaster:
@@ -214,6 +273,7 @@ class CashFlowForecaster:
         curr_bal = float(last_row.get("balance_mean", 0.0))
         curr_min_bal = float(last_row.get("balance_min", curr_bal))
         curr_reg = float(last_row.get("income_regularity_ratio", 1.0))
+        curr_dow = int(last_row.get("day_of_week_mode", 4))
 
         lag_1_in = float(last_row.get("weekly_inflow", last_row.get("lag_1_inflow", 0.0)))
         lag_2_in = float(last_row.get("lag_1_inflow", 0.0))
@@ -222,6 +282,8 @@ class CashFlowForecaster:
 
         lag_1_out = float(last_row.get("weekly_outflow", last_row.get("lag_1_outflow", 0.0)))
         lag_2_out = float(last_row.get("lag_1_outflow", 0.0))
+        lag_3_out = float(last_row.get("lag_2_outflow", 0.0))
+        lag_4_out = float(last_row.get("lag_3_outflow", 0.0))
         lag_1_bal = curr_bal
 
         base_dt = pd.to_datetime(base_date)
@@ -235,6 +297,10 @@ class CashFlowForecaster:
             is_me = int(midpoint.day >= 25)
             is_eid = int(month in [4, 11])
             is_har = int(month in [3, 9])
+            day_of_month = midpoint.day
+
+            in_lags = [lag_1_in, lag_2_in, lag_3_in, lag_4_in]
+            out_lags = [lag_1_out, lag_2_out, lag_3_out, lag_4_out]
 
             step_dict = {
                 "lag_1_inflow": lag_1_in,
@@ -243,10 +309,18 @@ class CashFlowForecaster:
                 "lag_4_inflow": lag_4_in,
                 "lag_1_outflow": lag_1_out,
                 "lag_2_outflow": lag_2_out,
+                "lag_3_outflow": lag_3_out,
+                "lag_4_outflow": lag_4_out,
+                "inflow_roll_mean_4": float(np.mean(in_lags)),
+                "inflow_roll_std_4": float(np.std(in_lags)),
+                "outflow_roll_mean_4": float(np.mean(out_lags)),
+                "outflow_roll_std_4": float(np.std(out_lags)),
                 "lag_1_balance": lag_1_bal,
                 "balance_mean": curr_bal,
                 "balance_min": curr_min_bal,
                 "income_regularity_ratio": curr_reg,
+                "day_of_week_mode": curr_dow,
+                "day_of_month": day_of_month,
                 "week_of_month": wom,
                 "month": month,
                 "is_month_end": is_me,
@@ -269,6 +343,8 @@ class CashFlowForecaster:
             lag_2_in = lag_1_in
             lag_1_in = pred_in
 
+            lag_4_out = lag_3_out
+            lag_3_out = lag_2_out
             lag_2_out = lag_1_out
             lag_1_out = pred_out
 

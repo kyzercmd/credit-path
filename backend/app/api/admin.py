@@ -27,7 +27,7 @@ from app.database import (
 )
 from app.fairness.module import compute_fairness_report
 from app.features.builder import build_features
-from app.ml.forecaster import CashFlowForecaster, NaiveForecaster
+from app.ml.forecaster import CashFlowForecaster, NaiveForecaster, SeasonalNaiveForecaster
 from app.ml.model_store import get_data_as_of, get_model_version, load_model
 from app.schemas import (
     AdminFunnelResponse,
@@ -252,11 +252,15 @@ def get_forecast_quality() -> ForecastQualityResponse:
 
     preds = forecaster.predict(test_feats)
     naive_preds = naive.predict(test_feats)
+    s_naive = SeasonalNaiveForecaster(seasonal_lag=4)
+    s_naive_preds = s_naive.predict(test_feats)
 
     test_feats["pred_inflow"] = preds["predicted_inflow"].values
     test_feats["pred_outflow"] = preds["predicted_outflow"].values
     test_feats["naive_pred_inflow"] = naive_preds["predicted_inflow"].values
     test_feats["naive_pred_outflow"] = naive_preds["predicted_outflow"].values
+    test_feats["s_naive_pred_inflow"] = s_naive_preds["predicted_inflow"].values
+    test_feats["s_naive_pred_outflow"] = s_naive_preds["predicted_outflow"].values
 
     inflow_err = np.abs(test_feats["weekly_inflow"] - test_feats["pred_inflow"])
     outflow_err = np.abs(test_feats["weekly_outflow"] - test_feats["pred_outflow"])
@@ -269,6 +273,10 @@ def get_forecast_quality() -> ForecastQualityResponse:
     naive_inflow_err = np.abs(test_feats["weekly_inflow"] - test_feats["naive_pred_inflow"])
     naive_outflow_err = np.abs(test_feats["weekly_outflow"] - test_feats["naive_pred_outflow"])
     naive_total_err = naive_inflow_err + naive_outflow_err
+
+    s_naive_inflow_err = np.abs(test_feats["weekly_inflow"] - test_feats["s_naive_pred_inflow"])
+    s_naive_outflow_err = np.abs(test_feats["weekly_outflow"] - test_feats["s_naive_pred_outflow"])
+    s_naive_total_err = s_naive_inflow_err + s_naive_outflow_err
 
     naive_mae = float(np.mean(naive_total_err) / 2.0)
     naive_wape = float(np.sum(naive_total_err) / max(1.0, np.sum(total_vol)))
@@ -291,13 +299,36 @@ def get_forecast_quality() -> ForecastQualityResponse:
             p_naive_err = np.abs(p_df["weekly_inflow"] - p_df["naive_pred_inflow"]) + np.abs(
                 p_df["weekly_outflow"] - p_df["naive_pred_outflow"]
             )
+            p_s_naive_err = np.abs(p_df["weekly_inflow"] - p_df["s_naive_pred_inflow"]) + np.abs(
+                p_df["weekly_outflow"] - p_df["s_naive_pred_outflow"]
+            )
+
+            p_mae = round(float(np.mean(p_err) / 2.0), 2)
+            p_wape = round(float(np.sum(p_err) / max(1.0, np.sum(p_vol))), 4)
+            p_naive_mae = round(float(np.mean(p_naive_err) / 2.0), 2)
+            p_naive_wape = round(float(np.sum(p_naive_err) / max(1.0, np.sum(p_vol))), 4)
+            p_s_naive_mae = round(float(np.mean(p_s_naive_err) / 2.0), 2)
+            p_s_naive_wape = round(float(np.sum(p_s_naive_err) / max(1.0, np.sum(p_vol))), 4)
+
+            p_stronger_mae = min(p_naive_mae, p_s_naive_mae)
+            p_stronger_wape = min(p_naive_wape, p_s_naive_wape)
+
+            # low_confidence is computed: model worse than naive baseline
+            p_low_conf = bool((p_mae > p_stronger_mae) or (p_wape > p_stronger_wape))
+            p_tier = cfg.persona_tiers.get(p, "primary")
 
             by_persona[p] = {
-                "mae": round(float(np.mean(p_err) / 2.0), 2),
-                "wape": round(float(np.sum(p_err) / max(1.0, np.sum(p_vol))), 4),
-                "naive_mae": round(float(np.mean(p_naive_err) / 2.0), 2),
-                "naive_wape": round(float(np.sum(p_naive_err) / max(1.0, np.sum(p_vol))), 4),
+                "mae": p_mae,
+                "wape": p_wape,
+                "naive_mae": p_naive_mae,
+                "naive_wape": p_naive_wape,
+                "seasonal_naive_mae": p_s_naive_mae,
+                "seasonal_naive_wape": p_s_naive_wape,
+                "stronger_naive_mae": p_stronger_mae,
+                "stronger_naive_wape": p_stronger_wape,
                 "count": int(p_df["customer_id"].nunique()),
+                "low_confidence": p_low_conf,
+                "persona_tier": p_tier,
             }
         else:
             by_persona[p] = {
@@ -306,6 +337,8 @@ def get_forecast_quality() -> ForecastQualityResponse:
                 "naive_mae": None,
                 "naive_wape": None,
                 "count": 0,
+                "low_confidence": False,
+                "persona_tier": cfg.persona_tiers.get(p, "primary"),
             }
 
     response = ForecastQualityResponse(
@@ -376,6 +409,8 @@ def put_admin_config(payload: dict[str, Any]) -> ConfigResponse:
 
     # Invalidate caches so reports reflect updated config
     _FUNNEL_CACHE.clear()
+    global _FORECAST_QUALITY_CACHE
+    _FORECAST_QUALITY_CACHE = None
 
     version, timestamp = get_latest_config_version()
     return ConfigResponse(

@@ -322,7 +322,7 @@ export function RuleSettings({ data, isLoading = false, onConfigSaved }: RuleSet
             <label htmlFor="annual_interest_rate_pct" className="block text-xs font-semibold text-[#1A1A1F] mb-1">
               Annual Interest Rate %
             </label>
-            <p className="text-[11px] text-[#6B6B76] mb-2">Illustrative loan pricing rate</p>
+            <p className="text-[11px] text-[#6B6B76] mb-2">Illustrative cost rate (used for Conventional financing only)</p>
             <div className="relative">
               <input
                 id="annual_interest_rate_pct"

@@ -26,16 +26,19 @@ def client() -> TestClient:
 
 @pytest.fixture(scope="module")
 def sample_ready_customer_id() -> str:
-    """Find a confirmed Ready customer under baseline config."""
+    """Find a confirmed Ready customer with positive capacity under baseline config."""
     cids = get_customer_ids("all")
-    engine = ReadyEngine(config=get_config())
+    ready_engine = ReadyEngine(config=get_config())
+    affordability_engine = AffordabilityEngine(config=get_config())
     data = load_data()
 
-    for cid in cids[:50]:
-        res = engine.evaluate(cid, data=data)
+    for cid in cids[:100]:
+        res = ready_engine.evaluate(cid, data=data)
         if res.ready:
-            return cid
-    pytest.fail("Could not find a Ready customer in test slice")
+            sr = affordability_engine.safe_range(cid, data=data)
+            if sr.monthly_high > 0:
+                return cid
+    pytest.fail("Could not find a Ready customer with positive capacity in test slice")
 
 
 def test_ready_threshold_change_affects_status_engine(sample_ready_customer_id: str):

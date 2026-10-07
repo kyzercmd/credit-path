@@ -12,7 +12,7 @@ import { Footer } from "@/components/Footer";
 import { Skeleton } from "@/components/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { WhySheet } from "@/components/WhySheet";
-import { ArrowLeft, ArrowRight, ShieldCheck, TrendingDown, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShieldCheck, TrendingDown, HelpCircle, AlertTriangle } from "lucide-react";
 
 export default function SafeRangePage() {
   const router = useRouter();
@@ -166,6 +166,13 @@ export default function SafeRangePage() {
           {data.basis_sentence ||
             t("safe_range.basis", { months: data.basis_months.toString() })}
         </div>
+
+        {data.low_confidence && (
+          <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center justify-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+            <span>{t("safe_range.low_confidence_notice")}</span>
+          </div>
+        )}
       </Card>
 
       {/* Action to Loan Check */}
