@@ -20,7 +20,7 @@ import pandas as pd
 from app.config import Config, get_config
 from app.data.loader import load_data
 from app.engines.reasons import get_reason_text
-from app.features.builder import build_customer_features
+from app.features.builder import build_customer_features, get_merged_customer_data
 from app.ml.model_store import load_model
 from app.schemas import CheckResult
 
@@ -57,7 +57,7 @@ class ReadyEngine:
         if customer_features is None:
             customer_features = build_customer_features(customer_id, cutoff_date=cutoff_date)
         if data is None:
-            data = load_data()
+            data = get_merged_customer_data(customer_id)
 
         # Check 1: History (months_active)
         if len(customer_features) > 0 and "months_active" in customer_features.columns:

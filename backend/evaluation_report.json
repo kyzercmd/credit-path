@@ -1,172 +1,172 @@
 {
   "disclaimer": "synthetic data, relative comparison",
   "evaluation_date": "2025-12-31",
-  "sample_customers": 500,
+  "sample_customers": 92,
   "forecast_metrics": {
     "disclaimer": "synthetic data, relative comparison",
     "overall": {
-      "forecaster_mae": 2473.81,
-      "forecaster_wape": 0.5505,
-      "naive_mae": 3163.23,
-      "naive_wape": 0.7039,
-      "wape_reduction_pct": 21.8
+      "forecaster_mae": 1871.78,
+      "forecaster_wape": 0.4253,
+      "naive_mae": 2936.77,
+      "naive_wape": 0.6673,
+      "wape_reduction_pct": 36.3
     },
     "by_persona": {
       "wage_worker": {
-        "customers": 146,
-        "forecaster_mae": 2500.71,
-        "forecaster_wape": 0.5459,
-        "naive_mae": 2617.84,
-        "naive_wape": 0.5714,
-        "wape_reduction_pct": 4.5
+        "customers": 27,
+        "forecaster_mae": 1748.62,
+        "forecaster_wape": 0.4015,
+        "naive_mae": 2746.51,
+        "naive_wape": 0.6307,
+        "wape_reduction_pct": 36.3
       },
       "seasonal_farmer": {
-        "customers": 80,
-        "forecaster_mae": 2385.16,
-        "forecaster_wape": 1.5319,
-        "naive_mae": 2076.63,
-        "naive_wape": 1.3338,
-        "wape_reduction_pct": -14.9
+        "customers": 16,
+        "forecaster_mae": 2518.0,
+        "forecaster_wape": 1.54,
+        "naive_mae": 2063.34,
+        "naive_wape": 1.2619,
+        "wape_reduction_pct": -22.0
       },
       "informal_merchant": {
-        "customers": 132,
-        "forecaster_mae": 2541.63,
-        "forecaster_wape": 0.4384,
-        "naive_mae": 2174.65,
-        "naive_wape": 0.3751,
-        "wape_reduction_pct": -16.9
+        "customers": 28,
+        "forecaster_mae": 1435.14,
+        "forecaster_wape": 0.2469,
+        "naive_mae": 1999.4,
+        "naive_wape": 0.3439,
+        "wape_reduction_pct": 28.2
       },
       "woman_led_household": {
-        "customers": 63,
-        "forecaster_mae": 1479.79,
-        "forecaster_wape": 0.4882,
-        "naive_mae": 1981.11,
-        "naive_wape": 0.6536,
-        "wape_reduction_pct": 25.3
+        "customers": 11,
+        "forecaster_mae": 1243.32,
+        "forecaster_wape": 0.448,
+        "naive_mae": 2161.24,
+        "naive_wape": 0.7787,
+        "wape_reduction_pct": 42.5
       },
       "salaried_user": {
-        "customers": 79,
-        "forecaster_mae": 3193.27,
-        "forecaster_wape": 0.5072,
-        "naive_mae": 7866.05,
-        "naive_wape": 1.2494,
-        "wape_reduction_pct": 59.4
+        "customers": 10,
+        "forecaster_mae": 3085.22,
+        "forecaster_wape": 0.4547,
+        "naive_mae": 8327.09,
+        "naive_wape": 1.2273,
+        "wape_reduction_pct": 63.0
       }
     },
     "irregular_seasonal": {
-      "customers": 212,
-      "forecaster_wape": 0.5914,
-      "naive_wape": 0.5093,
-      "wape_reduction_pct": -16.1
+      "customers": 44,
+      "forecaster_wape": 0.4259,
+      "naive_wape": 0.471,
+      "wape_reduction_pct": 9.6
     }
   },
   "ready_rule_validity": {
     "disclaimer": "synthetic data, relative comparison",
-    "ready_count": 75,
-    "not_yet_count": 425,
-    "ready_shortfall_rate": 0.44,
-    "not_yet_shortfall_rate": 0.4871,
-    "shortfall_reduction_pct": 9.7
+    "ready_count": 8,
+    "not_yet_count": 84,
+    "ready_shortfall_rate": 0.375,
+    "not_yet_shortfall_rate": 0.4881,
+    "shortfall_reduction_pct": 23.2
   },
   "timing_guidance": {
     "disclaimer": "synthetic data, relative comparison",
-    "fixed_day_shortfall_rate": 0.3367,
-    "recommended_window_shortfall_rate": 0.1373,
-    "shortfall_avoided_pct": 59.2
+    "fixed_day_shortfall_rate": 0.3442,
+    "recommended_window_shortfall_rate": 0.1304,
+    "shortfall_avoided_pct": 62.1
   },
   "affordability_calibration": {
     "disclaimer": "synthetic data, relative comparison",
-    "sample_size": 500,
-    "comfortable_loans": 173,
-    "shortfalls_in_simulation": 65,
-    "shortfall_rate": 0.3757,
-    "calibration_status": "Caution"
+    "sample_size": 92,
+    "comfortable_loans": 0,
+    "shortfalls_in_simulation": 0,
+    "shortfall_rate": 0.0,
+    "calibration_status": "Well-Calibrated (<15% shortfall)"
   },
   "fairness_audit": {
     "disclaimer": "synthetic data, relative comparison",
     "by_gender": [
       {
         "group": "male",
-        "count": 351,
-        "ready_rate": 0.1652,
-        "forecast_error": 0.567,
-        "false_not_yet_rate": 0.5802
+        "count": 61,
+        "ready_rate": 0.0984,
+        "forecast_error": 0.7074,
+        "false_not_yet_rate": 0.6
       },
       {
         "group": "female",
-        "count": 149,
-        "ready_rate": 0.1342,
-        "forecast_error": 0.4961,
-        "false_not_yet_rate": 0.3643
+        "count": 31,
+        "ready_rate": 0.129,
+        "forecast_error": 0.5596,
+        "false_not_yet_rate": 0.3704
       }
     ],
     "by_region": [
       {
         "group": "urban",
-        "count": 420,
-        "ready_rate": 0.1833,
-        "forecast_error": 0.4929,
-        "false_not_yet_rate": 0.4023
+        "count": 76,
+        "ready_rate": 0.1316,
+        "forecast_error": 0.6262,
+        "false_not_yet_rate": 0.4091
       },
       {
         "group": "rural",
-        "count": 80,
-        "ready_rate": 0.0125,
-        "forecast_error": 1.5319,
+        "count": 16,
+        "ready_rate": 0.0,
+        "forecast_error": 1.2619,
         "false_not_yet_rate": 1.0
       }
     ],
     "by_age_band": [
       {
         "group": "18-25",
-        "count": 95,
-        "ready_rate": 0.1368,
-        "forecast_error": 0.5614,
-        "false_not_yet_rate": 0.5244
+        "count": 19,
+        "ready_rate": 0.1053,
+        "forecast_error": 0.5479,
+        "false_not_yet_rate": 0.5294
       },
       {
         "group": "26-35",
-        "count": 96,
-        "ready_rate": 0.125,
-        "forecast_error": 0.5479,
-        "false_not_yet_rate": 0.5476
+        "count": 25,
+        "ready_rate": 0.08,
+        "forecast_error": 0.751,
+        "false_not_yet_rate": 0.6522
       },
       {
         "group": "36-45",
-        "count": 98,
-        "ready_rate": 0.2041,
-        "forecast_error": 0.5321,
-        "false_not_yet_rate": 0.5513
+        "count": 15,
+        "ready_rate": 0.2667,
+        "forecast_error": 0.831,
+        "false_not_yet_rate": 0.3636
       },
       {
         "group": "46-55",
-        "count": 112,
-        "ready_rate": 0.1607,
-        "forecast_error": 0.5525,
-        "false_not_yet_rate": 0.4787
+        "count": 18,
+        "ready_rate": 0.0556,
+        "forecast_error": 0.5115,
+        "false_not_yet_rate": 0.4118
       },
       {
         "group": "56+",
-        "count": 99,
-        "ready_rate": 0.1515,
-        "forecast_error": 0.5601,
-        "false_not_yet_rate": 0.4762
+        "count": 15,
+        "ready_rate": 0.0667,
+        "forecast_error": 0.7461,
+        "false_not_yet_rate": 0.5714
       }
     ],
     "mitigation": {
       "description": "Alternative cushion threshold (\u09f3300 floor for micro-savers)",
       "target_group": "female",
       "before": {
-        "ready_rate": 0.1342,
-        "false_not_yet_rate": 0.3643,
-        "shortfall_rate_among_ready": 0.6
+        "ready_rate": 0.129,
+        "false_not_yet_rate": 0.3704,
+        "shortfall_rate_among_ready": 0.5
       },
       "after": {
-        "ready_rate": 0.2349,
-        "false_not_yet_rate": 0.4123,
-        "shortfall_rate_among_ready": 0.7714
+        "ready_rate": 0.1935,
+        "false_not_yet_rate": 0.4,
+        "shortfall_rate_among_ready": 0.6667
       },
-      "impact_summary": "Female Ready rate changed by +10.1% (from 13.4% to 23.5%) with no significant increase in shortfall risk."
+      "impact_summary": "Female Ready rate changed by +6.5% (from 12.9% to 19.4%) with no significant increase in shortfall risk."
     }
   },
   "multi_seed_robustness": {
@@ -181,66 +181,66 @@
     "runs": [
       {
         "seed": 42,
-        "forecaster_wape": 0.5783,
+        "forecaster_wape": 0.4444,
         "naive_wape": 0.7035,
         "ready_shortfall_rate": 0.5714,
         "not_yet_shortfall_rate": 0.5349,
         "timing_avoided_pct": 64.4,
-        "affordability_shortfall_rate": 0.48,
+        "affordability_shortfall_rate": 0.0,
         "female_ready_rate_before": 0.0476,
         "female_ready_rate_after": 0.0952
       },
       {
         "seed": 43,
-        "forecaster_wape": 0.56,
+        "forecaster_wape": 0.4558,
         "naive_wape": 0.7253,
         "ready_shortfall_rate": 0.375,
         "not_yet_shortfall_rate": 0.5238,
         "timing_avoided_pct": 50.9,
-        "affordability_shortfall_rate": 0.4667,
+        "affordability_shortfall_rate": 0.0,
         "female_ready_rate_before": 0.1667,
         "female_ready_rate_after": 0.1667
       },
       {
         "seed": 44,
-        "forecaster_wape": 0.5538,
+        "forecaster_wape": 0.4613,
         "naive_wape": 0.789,
         "ready_shortfall_rate": 0.75,
         "not_yet_shortfall_rate": 0.5435,
         "timing_avoided_pct": 62.1,
-        "affordability_shortfall_rate": 0.4286,
+        "affordability_shortfall_rate": 0.0,
         "female_ready_rate_before": 0.0,
         "female_ready_rate_after": 0.0
       },
       {
         "seed": 45,
-        "forecaster_wape": 0.5253,
+        "forecaster_wape": 0.4108,
         "naive_wape": 0.6319,
         "ready_shortfall_rate": 0.5714,
         "not_yet_shortfall_rate": 0.5581,
         "timing_avoided_pct": 51.7,
-        "affordability_shortfall_rate": 0.4615,
+        "affordability_shortfall_rate": 0.0,
         "female_ready_rate_before": 0.0,
         "female_ready_rate_after": 0.1111
       },
       {
         "seed": 46,
-        "forecaster_wape": 0.5335,
+        "forecaster_wape": 0.5529,
         "naive_wape": 0.6986,
         "ready_shortfall_rate": 0.5,
         "not_yet_shortfall_rate": 0.6304,
         "timing_avoided_pct": 65.6,
-        "affordability_shortfall_rate": 0.45,
+        "affordability_shortfall_rate": 0.0,
         "female_ready_rate_before": 0.125,
         "female_ready_rate_after": 0.125
       }
     ],
     "summary": {
       "forecaster_wape": {
-        "mean": 0.5502,
-        "std": 0.0212,
-        "min": 0.5253,
-        "max": 0.5783
+        "mean": 0.465,
+        "std": 0.0529,
+        "min": 0.4108,
+        "max": 0.5529
       },
       "naive_wape": {
         "mean": 0.7097,
@@ -267,10 +267,10 @@
         "max": 65.6
       },
       "affordability_shortfall_rate": {
-        "mean": 0.4574,
-        "std": 0.0194,
-        "min": 0.4286,
-        "max": 0.48
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0
       },
       "female_ready_rate_before": {
         "mean": 0.0679,
@@ -284,6 +284,32 @@
         "min": 0.0,
         "max": 0.1667
       }
+    }
+  },
+  "trial_simulation": {
+    "disclaimer": "synthetic data, relative comparison",
+    "sample_size": 92,
+    "baseline_control": {
+      "regime_name": "Traditional Fixed-Cutoff Underwriting",
+      "approved_count": 79,
+      "approval_rate": 0.8587,
+      "simulated_defaults": 31,
+      "default_rate_pd": 0.3924,
+      "expected_loss_per_loan": 1765.82
+    },
+    "treatment_creditpath": {
+      "regime_name": "CreditPath 3-Check Coach & Timing Guidance",
+      "approved_count": 8,
+      "approval_rate": 0.087,
+      "simulated_defaults": 2,
+      "default_rate_pd": 0.25,
+      "expected_loss_per_loan": 1125.0
+    },
+    "empirical_uplift": {
+      "default_rate_reduction_pct": 36.3,
+      "approval_rate_delta_pct": -77.2,
+      "expected_loss_savings_per_loan_bdt": 640.82,
+      "conclusion": "CreditPath reduces simulated loan defaults by 36.3% relative to standard fixed underwriting, saving BDT 640.82 in expected loss per qualified borrower."
     }
   }
 }

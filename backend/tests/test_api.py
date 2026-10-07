@@ -33,6 +33,12 @@ def client():
 
 
 @pytest.fixture
+def admin_headers() -> dict[str, str]:
+    """Admin authentication header."""
+    return {"X-Admin-API-Key": get_config().admin_api_key}
+
+
+@pytest.fixture
 def ready_customer_id() -> str:
     """Known ready customer."""
     return "C00009"
@@ -42,6 +48,27 @@ def ready_customer_id() -> str:
 def not_yet_customer_id() -> str:
     """Known not yet customer."""
     return "C00001"
+
+
+def test_admin_auth_required(client: TestClient):
+    """Admin endpoints require valid X-Admin-API-Key or Bearer token header."""
+    res_no_auth = client.get("/admin/config")
+    assert res_no_auth.status_code == 401
+
+    res_bad_auth = client.get("/admin/config", headers={"X-Admin-API-Key": "wrong-key"})
+    assert res_bad_auth.status_code == 401
+
+    res_bearer_ok = client.get(
+        "/admin/config",
+        headers={"Authorization": f"Bearer {get_config().admin_token}"},
+    )
+    assert res_bearer_ok.status_code == 200
+
+    res_api_key_ok = client.get(
+        "/admin/config",
+        headers={"X-Admin-API-Key": get_config().admin_api_key},
+    )
+    assert res_api_key_ok.status_code == 200
 
 
 def test_health(client: TestClient):
@@ -242,12 +269,14 @@ def test_consent_opt_out_blocks_access(
 def test_kill_switch_hides_features(
     client: TestClient,
     ready_customer_id: str,
+    admin_headers: dict[str, str],
 ):
     """Kill switch hides safe-range and loan-check with HTTP 403 while leaving others active."""
     # 1. Engage kill switch
     res_ks = client.post(
         "/admin/kill-switch",
         json={"kill_safe_range": True, "kill_loan_check": True},
+        headers=admin_headers,
     )
     assert res_ks.status_code == 200
     assert res_ks.json()["kill_safe_range"] is True
@@ -275,6 +304,7 @@ def test_kill_switch_hides_features(
     res_reset = client.post(
         "/admin/kill-switch",
         json={"kill_safe_range": False, "kill_loan_check": False},
+        headers=admin_headers,
     )
     assert res_reset.status_code == 200
 
@@ -283,10 +313,13 @@ def test_kill_switch_hides_features(
     assert r_sr_again.status_code == 200
 
 
-def test_admin_funnel_and_forecast_quality(client: TestClient):
+def test_admin_funnel_and_forecast_quality(
+    client: TestClient,
+    admin_headers: dict[str, str],
+):
     """GET /admin/funnel and GET /admin/forecast-quality return accurate analytics."""
     # 1. Funnel
-    res_funnel = client.get("/admin/funnel")
+    res_funnel = client.get("/admin/funnel", headers=admin_headers)
     assert res_funnel.status_code == 200
     funnel_data = res_funnel.json()
     assert funnel_data["total_customers"] == 10000
@@ -298,7 +331,7 @@ def test_admin_funnel_and_forecast_quality(client: TestClient):
     assert "Cushion & Bills" in bucket_labels
 
     # 2. Forecast quality
-    res_fq = client.get("/admin/forecast-quality")
+    res_fq = client.get("/admin/forecast-quality", headers=admin_headers)
     assert res_fq.status_code == 200
     fq_data = res_fq.json()
     assert fq_data["overall_mae"] > 0
@@ -319,9 +352,12 @@ def test_admin_funnel_and_forecast_quality(client: TestClient):
         assert fq_data["by_persona"][p]["count"] > 0
 
 
-def test_admin_fairness(client: TestClient):
+def test_admin_fairness(
+    client: TestClient,
+    admin_headers: dict[str, str],
+):
     """GET /admin/fairness returns demographic fairness breakdown and mitigation."""
-    res = client.get("/admin/fairness")
+    res = client.get("/admin/fairness", headers=admin_headers)
     assert res.status_code == 200
     data = res.json()
     assert len(data["by_gender"]) >= 2
@@ -333,10 +369,13 @@ def test_admin_fairness(client: TestClient):
     assert "impact_summary" in data["mitigation"]
 
 
-def test_admin_config_put_updates_and_versions(client: TestClient):
+def test_admin_config_put_updates_and_versions(
+    client: TestClient,
+    admin_headers: dict[str, str],
+):
     """GET /admin/config and PUT /admin/config update policy and increment versions."""
     # 1. Initial config
-    res_init = client.get("/admin/config")
+    res_init = client.get("/admin/config", headers=admin_headers)
     assert res_init.status_code == 200
     init_data = res_init.json()
     init_version = init_data["version"]
@@ -344,7 +383,7 @@ def test_admin_config_put_updates_and_versions(client: TestClient):
 
     # 2. Update config
     new_cap = 0.35
-    res_put = client.put("/admin/config", json={"affordability_cap": new_cap})
+    res_put = client.put("/admin/config", json={"affordability_cap": new_cap}, headers=admin_headers)
     assert res_put.status_code == 200
     put_data = res_put.json()
     assert put_data["version"] > init_version
@@ -355,7 +394,7 @@ def test_admin_config_put_updates_and_versions(client: TestClient):
     assert active_cfg.affordability_cap == new_cap
 
     # 3. Reset config back to original
-    client.put("/admin/config", json={"affordability_cap": orig_cap})
+    client.put("/admin/config", json={"affordability_cap": orig_cap}, headers=admin_headers)
     assert get_config().affordability_cap == orig_cap
 
 
@@ -363,6 +402,7 @@ def test_all_responses_contain_meta_fields(
     client: TestClient,
     ready_customer_id: str,
     not_yet_customer_id: str,
+    admin_headers: dict[str, str],
 ):
     """
     Verify EVERY successful endpoint response contains model_version, data_as_of,
@@ -390,11 +430,12 @@ def test_all_responses_contain_meta_fields(
         method = item[0]
         url = item[1]
         payload = item[2] if len(item) > 2 else None
+        headers = admin_headers if url.startswith("/admin") else None
 
         if method == "GET":
-            res = client.get(url)
+            res = client.get(url, headers=headers)
         else:
-            res = client.post(url, json=payload)
+            res = client.post(url, json=payload, headers=headers)
 
         assert res.status_code == 200, f"Endpoint {url} failed with status {res.status_code}"
         data = res.json()
@@ -458,4 +499,67 @@ def test_contract_customer_and_admin_responses_meta_fields(
             assert field in meta, f"'{field}' missing from meta in {url}"
             assert isinstance(meta[field], str), f"'{field}' in meta in {url} is not a string"
             assert len(meta[field].strip()) > 0, f"'{field}' in meta in {url} is empty"
+
+
+def test_real_time_ingestion_and_dynamic_readiness(
+    client: TestClient,
+    not_yet_customer_id: str,
+):
+    """
+    Test real-time event ingestion (transactions, bills, daily balances)
+    and dynamic 'as_of' date re-scoring without batch processing cutoffs.
+    """
+    cid = not_yet_customer_id
+
+    # 1. Ingest transaction beyond batch cutoff
+    res_tx = client.post(
+        f"/customer/{cid}/ingest/transaction",
+        json={
+            "date": "2026-02-01",
+            "type": "inflow",
+            "amount": 18000.0,
+            "description": "Direct bank salary credit",
+        },
+    )
+    assert res_tx.status_code == 200
+    tx_data = res_tx.json()
+    assert tx_data["recorded"] is True
+    assert tx_data["as_of_date"] == "2026-02-01"
+    assert "transition" in tx_data
+    assert tx_data["transition"]["total_checks_count"] == 3
+
+    # 2. Ingest daily cushion balance
+    res_bal = client.post(
+        f"/customer/{cid}/ingest/balance",
+        json={
+            "date": "2026-02-05",
+            "balance": 15000.0,
+            "shortfall": 0,
+        },
+    )
+    assert res_bal.status_code == 200
+    bal_data = res_bal.json()
+    assert bal_data["recorded"] is True
+    assert bal_data["as_of_date"] == "2026-02-05"
+
+    # 3. Ingest bill payment
+    res_bill = client.post(
+        f"/customer/{cid}/ingest/bill",
+        json={
+            "due_date": "2026-02-10",
+            "amount": 2500.0,
+            "paid_date": "2026-02-08",
+            "on_time": 1,
+            "biller": "Titas Gas",
+        },
+    )
+    assert res_bill.status_code == 200
+    bill_data = res_bill.json()
+    assert bill_data["recorded"] is True
+
+    # 4. Status reflects dynamic as-of without hardcoded 2025 cutoff
+    res_status = client.get(f"/customer/{cid}/status?as_of=2026-02-10")
+    assert res_status.status_code == 200
+    status_data = res_status.json()
+    assert status_data["meta"]["data_as_of"] == "2026-02-10"
 

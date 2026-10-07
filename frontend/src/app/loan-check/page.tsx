@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useConsent } from "@/contexts/ConsentContext";
-import { postLoanCheck, LoanCheckResponse, ApiError } from "@/lib/api";
+import { postLoanCheck, postFunnelEvent, LoanCheckResponse, ApiError } from "@/lib/api";
 import { LoanSliders } from "@/components/LoanSliders";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card } from "@/components/Card";
@@ -46,6 +46,17 @@ export default function LoanCheckPage() {
         const res = await postLoanCheck(customerId, amt, tnr);
         if (seq === reqSeqRef.current) {
           setData(res);
+          postFunnelEvent(customerId, "loan_check_performed", {
+            amount: amt,
+            tenor: tnr,
+            verdict: res.verdict,
+          }).catch(() => {});
+          if (res.verdict === "Comfortable") {
+            postFunnelEvent(customerId, "credit_converted", {
+              amount: amt,
+              monthly_payment: res.monthly_payment,
+            }).catch(() => {});
+          }
         }
       } catch (err: any) {
         if (seq === reqSeqRef.current) {
@@ -199,7 +210,11 @@ export default function LoanCheckPage() {
 
       {/* Card 2: Verdict & Monthly Breakdown */}
       {data && (
-        <Card className={`transition-opacity ${calculating ? "opacity-60" : "opacity-100"}`}>
+        <Card
+          aria-live="polite"
+          aria-atomic="true"
+          className={`transition-opacity ${calculating ? "opacity-60" : "opacity-100"}`}
+        >
           {/* Verdict Banner */}
           <div className="flex items-center justify-between gap-2 pb-4 border-b border-[#E8E8EC] mb-4">
             <div>

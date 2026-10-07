@@ -8,11 +8,15 @@ import {
   getAdminFairness,
   getAdminConfig,
   getAdminAuditLog,
+  getAdminBaselineTrial,
+  getAdminFunnelAnalytics,
   AdminFunnelResponse,
   ForecastQualityResponse,
   FairnessResponse,
   ConfigResponse,
   AuditLogResponse,
+  TrialEvaluationResponse,
+  FunnelAnalyticsResponse,
 } from "@/lib/api";
 import { FunnelTable } from "@/components/admin/FunnelTable";
 import { ForecastQuality } from "@/components/admin/ForecastQuality";
@@ -20,6 +24,8 @@ import { RuleSettings } from "@/components/admin/RuleSettings";
 import { FairnessPanel } from "@/components/admin/FairnessPanel";
 import { KillSwitch } from "@/components/admin/KillSwitch";
 import { AuditLog } from "@/components/admin/AuditLog";
+import { BaselineTrialPanel } from "@/components/admin/BaselineTrialPanel";
+import { EventSimulator } from "@/components/EventSimulator";
 import { Skeleton } from "@/components/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
 import {
@@ -33,6 +39,8 @@ import {
   ScrollText,
   ShieldCheck,
   CheckCircle2,
+  TrendingDown,
+  Zap,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -41,6 +49,8 @@ export default function AdminPage() {
   const [configData, setConfigData] = useState<ConfigResponse | null>(null);
   const [fairness, setFairness] = useState<FairnessResponse | null>(null);
   const [auditLog, setAuditLog] = useState<AuditLogResponse | null>(null);
+  const [baselineTrial, setBaselineTrial] = useState<TrialEvaluationResponse | null>(null);
+  const [funnelAnalytics, setFunnelAnalytics] = useState<FunnelAnalyticsResponse | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -56,19 +66,24 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const [funnelRes, forecastRes, configRes, fairnessRes, auditRes] = await Promise.all([
-        getAdminFunnel(),
-        getAdminForecastQuality(),
-        getAdminConfig(),
-        getAdminFairness(),
-        getAdminAuditLog(),
-      ]);
+      const [funnelRes, forecastRes, configRes, fairnessRes, auditRes, trialRes, funnelAnalyticsRes] =
+        await Promise.all([
+          getAdminFunnel(),
+          getAdminForecastQuality(),
+          getAdminConfig(),
+          getAdminFairness(),
+          getAdminAuditLog(),
+          getAdminBaselineTrial().catch(() => null),
+          getAdminFunnelAnalytics().catch(() => null),
+        ]);
 
       setFunnel(funnelRes);
       setForecast(forecastRes);
       setConfigData(configRes);
       setFairness(fairnessRes);
       setAuditLog(auditRes);
+      setBaselineTrial(trialRes);
+      setFunnelAnalytics(funnelAnalyticsRes);
     } catch (err: any) {
       setError(err?.message || "Failed to load admin telemetry data.");
     } finally {
@@ -114,14 +129,18 @@ export default function AdminPage() {
       disclaimer: "Built on synthetic data. Guidance only, not a loan offer.",
     };
 
+  const [adminSimulatorCustomer, setAdminSimulatorCustomer] = useState<string>("CUST_000001");
+
   const tabs = [
     { id: "all", label: "All Sections", icon: LayoutDashboard },
-    { id: "funnel", label: "Funnel (U1)", icon: CheckCircle2 },
+    { id: "funnel", label: "Readiness Funnel (U1)", icon: CheckCircle2 },
     { id: "forecast", label: "Forecast Quality (U2)", icon: TrendingUp },
     { id: "rules", label: "Rule Settings (U3)", icon: Sliders },
     { id: "fairness", label: "Fairness Audit (U4)", icon: Scale },
     { id: "killswitch", label: "Kill Switch (U5)", icon: Power },
     { id: "audit", label: "Audit Log (U6)", icon: ScrollText },
+    { id: "simulator", label: "Live Ingestion Studio (U8)", icon: Zap },
+    { id: "trial", label: "Impact & Trial (U7)", icon: TrendingDown },
   ];
 
   return (
@@ -172,9 +191,9 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Section Navigation Tabs */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 overflow-x-auto no-scrollbar">
-          <nav className="flex space-x-1 sm:space-x-2 py-2" aria-label="Admin Navigation Tabs">
+        {/* Section Navigation Tabs: flex-wrap to prevent horizontal scrolling */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2 py-2" role="tablist" aria-label="Admin Navigation Tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -182,10 +201,14 @@ export default function AdminPage() {
                 <button
                   key={tab.id}
                   type="button"
+                  role="tab"
+                  id={`tab-${tab.id}`}
+                  aria-selected={isActive}
+                  aria-controls={`panel-${tab.id}`}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors select-none ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors select-none focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600 ${
                     isActive
-                      ? "bg-blue-50 text-blue-700 font-semibold"
+                      ? "bg-blue-50 text-blue-700 font-semibold shadow-2xs"
                       : "text-[#6B6B76] hover:text-[#1A1A1F] hover:bg-gray-100"
                   }`}
                 >
@@ -227,21 +250,21 @@ export default function AdminPage() {
           <div className="space-y-6">
             {/* Section 1: Funnel Table (U1) */}
             {(activeTab === "all" || activeTab === "funnel") && (
-              <section id="section-funnel">
+              <section id="panel-funnel" role="tabpanel" aria-labelledby="tab-funnel">
                 <FunnelTable data={funnel} />
               </section>
             )}
 
             {/* Section 2: Forecast Quality (U2) */}
             {(activeTab === "all" || activeTab === "forecast") && (
-              <section id="section-forecast">
+              <section id="panel-forecast" role="tabpanel" aria-labelledby="tab-forecast">
                 <ForecastQuality data={forecast} />
               </section>
             )}
 
             {/* Section 3: Rule Settings (U3) */}
             {(activeTab === "all" || activeTab === "rules") && (
-              <section id="section-rules">
+              <section id="panel-rules" role="tabpanel" aria-labelledby="tab-rules">
                 <RuleSettings
                   data={configData}
                   onConfigSaved={handleConfigSaved}
@@ -251,14 +274,14 @@ export default function AdminPage() {
 
             {/* Section 4: Fairness Panel (U4) */}
             {(activeTab === "all" || activeTab === "fairness") && (
-              <section id="section-fairness">
+              <section id="panel-fairness" role="tabpanel" aria-labelledby="tab-fairness">
                 <FairnessPanel data={fairness} />
               </section>
             )}
 
             {/* Section 5: Kill Switch (U5) */}
             {(activeTab === "all" || activeTab === "killswitch") && (
-              <section id="section-killswitch">
+              <section id="panel-killswitch" role="tabpanel" aria-labelledby="tab-killswitch">
                 <KillSwitch
                   initialKillSafeRange={Boolean(configData?.config?.kill_safe_range)}
                   initialKillLoanCheck={Boolean(configData?.config?.kill_loan_check)}
@@ -269,8 +292,43 @@ export default function AdminPage() {
 
             {/* Section 6: Audit Log (U6) */}
             {(activeTab === "all" || activeTab === "audit") && (
-              <section id="section-audit">
+              <section id="panel-audit" role="tabpanel" aria-labelledby="tab-audit">
                 <AuditLog data={auditLog} onRefresh={() => loadData(true)} />
+              </section>
+            )}
+
+            {/* Section 8: Live Ingestion Studio (U8) */}
+            {(activeTab === "all" || activeTab === "simulator") && (
+              <section id="panel-simulator" role="tabpanel" aria-labelledby="tab-simulator" className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200 shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-700">Target Customer ID:</span>
+                    <input
+                      type="text"
+                      value={adminSimulatorCustomer}
+                      onChange={(e) => setAdminSimulatorCustomer(e.target.value.toUpperCase())}
+                      className="px-2.5 py-1 text-xs font-mono font-bold border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 w-36 uppercase"
+                    />
+                  </div>
+                  <span className="text-[11px] text-gray-500">
+                    Live events update SQLite/Postgres in real-time
+                  </span>
+                </div>
+                <EventSimulator
+                  customerId={adminSimulatorCustomer}
+                  onEventProcessed={() => loadData(true)}
+                />
+              </section>
+            )}
+
+            {/* Section 7: Impact & Baseline Trial (U7) */}
+            {(activeTab === "all" || activeTab === "trial") && (
+              <section id="panel-trial" role="tabpanel" aria-labelledby="tab-trial">
+                <BaselineTrialPanel
+                  trialData={baselineTrial}
+                  funnelAnalytics={funnelAnalytics}
+                  isLoading={isLoading}
+                />
               </section>
             )}
           </div>

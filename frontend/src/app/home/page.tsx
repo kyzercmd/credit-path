@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useConsent } from "@/contexts/ConsentContext";
-import { getStatus, StatusResponse, CheckResult } from "@/lib/api";
+import { getStatus, postFunnelEvent, StatusResponse, CheckResult } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CheckRow } from "@/components/CheckRow";
 import { Card } from "@/components/Card";
@@ -33,6 +33,7 @@ export default function HomePage() {
     try {
       const res = await getStatus(customerId);
       setData(res);
+      postFunnelEvent(customerId, "profile_viewed", { ready: res.ready }).catch(() => {});
     } catch (err: any) {
       setError(err?.message || "Failed to load status");
     } finally {

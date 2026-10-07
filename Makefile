@@ -32,6 +32,15 @@ test: test-backend test-frontend
 eval:
 	cd backend && uv run python -m app.evaluation
 
+docker-up:
+	docker compose up --build -d
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose logs -f
+
 clean:
 	rm -f backend/creditpath.db
 	rm -rf backend/trained_models/

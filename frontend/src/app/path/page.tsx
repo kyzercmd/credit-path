@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useConsent } from "@/contexts/ConsentContext";
-import { getPath, PathResponse, PathStep } from "@/lib/api";
+import { getPath, postFunnelEvent, PathResponse, PathStep } from "@/lib/api";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Footer } from "@/components/Footer";
@@ -30,6 +30,7 @@ export default function PathPage() {
     try {
       const res = await getPath(customerId);
       setData(res);
+      postFunnelEvent(customerId, "path_explored", { steps_count: res.missing_items.length }).catch(() => {});
     } catch (err: any) {
       setError(err?.message || "Failed to load path to ready");
     } finally {

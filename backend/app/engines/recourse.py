@@ -18,7 +18,7 @@ from app.config import Config, get_config
 from app.data.loader import load_data
 from app.engines.reasons import get_reason_text
 from app.engines.ready import ReadyEngine
-from app.features.builder import build_customer_features
+from app.features.builder import build_customer_features, get_merged_customer_data
 from app.ml.model_store import get_model_version, get_data_as_of
 from app.schemas import Meta, PathStep, PathResponse
 
@@ -52,7 +52,7 @@ class RecourseEngine:
         if customer_features is None:
             customer_features = build_customer_features(customer_id, cutoff_date=cutoff_date)
         if data is None:
-            data = load_data()
+            data = get_merged_customer_data(customer_id)
 
         ready_res = self.ready_engine.evaluate(
             customer_id=customer_id,

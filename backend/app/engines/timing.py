@@ -15,7 +15,7 @@ import pandas as pd
 from app.config import Config, get_config
 from app.data.loader import load_data
 from app.engines.reasons import get_reason_text
-from app.features.builder import build_customer_features
+from app.features.builder import build_customer_features, get_merged_customer_data
 from app.ml.model_store import load_model, get_model_version, get_data_as_of
 from app.schemas import Meta, WeekForecast
 
@@ -49,7 +49,7 @@ class TimingEngine:
         if customer_features is None:
             customer_features = build_customer_features(customer_id, cutoff_date=cutoff_date)
         if data is None:
-            data = load_data()
+            data = get_merged_customer_data(customer_id)
 
         forecaster, _ = load_model("forecaster")
         weeks_count = cfg.forecast_weeks
