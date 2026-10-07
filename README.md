@@ -14,14 +14,15 @@
 ## 📋 Table of Contents
 
 1. [Overview & Problem Statement](#overview--problem-statement)
-2. [Target Beneficiaries & Persona Tiers](#target-beneficiaries--persona-tiers)
-3. [System Architecture](#system-architecture)
-4. [Core Pillars & Capabilities](#core-pillars--capabilities)
-5. [Empirical Evaluation Summary (Section 8)](#empirical-evaluation-summary-section-8)
-6. [Quick Start & Setup](#quick-start--setup)
-7. [API Reference](#api-reference)
-8. [Testing & Quality Assurance](#testing--quality-assurance)
-9. [Ethical AI, Privacy & Regulatory Compliance](#ethical-ai-privacy--regulatory-compliance)
+2. [Why CreditPath](#why-creditpath)
+3. [Target Beneficiaries & Persona Tiers](#target-beneficiaries--persona-tiers)
+4. [System Architecture](#system-architecture)
+5. [Core Pillars & Capabilities](#core-pillars--capabilities)
+6. [Empirical Evaluation Summary (Section 8)](#empirical-evaluation-summary-section-8)
+7. [Quick Start & Setup](#quick-start--setup)
+8. [API Reference](#api-reference)
+9. [Testing & Quality Assurance](#testing--quality-assurance)
+10. [Ethical AI, Privacy & Regulatory Compliance](#ethical-ai-privacy--regulatory-compliance)
 
 ---
 
@@ -35,6 +36,40 @@ In emerging economies such as Bangladesh, daily and weekly wage earners, informa
   > *"Is this borrower in a healthy position to take credit right now? If so, what repayment schedule is truly safe and sustainable? If not, what concrete actions will make them ready?"*
 
 **CreditPath is a borrower-first coach, not a loan underwriter.** It provides clear, actionable milestones, cash-flow forecasting with seasonal risk warnings, transparent recourse, and full privacy control.
+
+---
+
+## Why CreditPath
+
+Most tools answer *"Will you repay us?"*. CreditPath answers *"Can you repay safely, and when?"*
+
+| Capability | Digital lenders¹ | Microfinance institutions² | Credit bureau (CIB)³ | Budgeting apps⁴ | CreditPath |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Works with thin or no credit file | ✔ | ✔ | ✘ | ✔ | ✔ |
+| Explains the outcome in plain language | ✘ | ◐ | ✘ | ✘ | ✔ |
+| Forecasts future cash flow | n/p | ✘ | ✘ | ◐ | ✔ |
+| Suggests safe repayment timing | ✘ | ◐ | ✘ | ✘ | ✔ |
+| Stress-tests a 30% income drop | n/p | ✘ | ✘ | ✘ | ✔ |
+| Shows steps to become ready | ◐ | ◐ | ✘ | ✘ | ✔ |
+| Guidance only (no lending decision, no upsell) | ✘ | ✘ | ✔ | ✔ | ✔ |
+
+*Symbols: ✔ Yes · ◐ Partly · ✘ No · n/p Not public. Comparison reflects publicly available information as of October 7, 2026 and may change.*
+
+* **Category strengths**: Digital lenders provide fast, paperless access; MFIs offer strong community reach and trust; CIB maintains standard regulated credit history; budgeting apps provide accessible personal expense tracking.
+* **Our differentiators**:
+  * **Forecast-based timing**: Suggests repayment windows aligned with predicted cash-flow peaks rather than fixed dates.
+  * **30% stress test**: Verifies affordability under an adverse income drop before recommending limits.
+  * **Path to Ready**: Diagnoses missing checks with actionable, plain-language milestones instead of unassisted rejection.
+
+CreditPath is complementary. Lenders, MFIs and upay can use it as a readiness layer before or alongside their own processes.
+
+> **Where we are not yet strong**: Seasonal farmers and informal merchants are a next-phase focus because the forecast does not yet beat the baseline for those groups.
+
+---
+¹ City Bank–bKash digital nano loan (paperless lending based on MFS wallet usage); Mutual Trust Bank digital loan criteria.  
+² BRAC Microfinance (community-based Village Organizations, flexible seasonal loans).  
+³ Bangladesh Bank Credit Information Bureau (centralized institutional credit reporting database).  
+⁴ Bangladeshi personal finance apps (e.g., MoneyManage, EZer, TallyKhata).
 
 ---
 
