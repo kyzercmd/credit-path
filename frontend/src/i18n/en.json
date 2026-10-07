@@ -68,7 +68,8 @@
     "stressed_range": "If income drops by 30%",
     "basis": "Based on {months} months of your wallet activity",
     "try_loan_check": "Check a specific loan amount",
-    "comfort_rule": "Comfort rule: stays under your monthly spare money even in tighter months."
+    "comfort_rule": "Comfort rule: stays under your monthly spare money even in tighter months.",
+    "low_confidence_notice": "This estimate is less reliable for your income pattern."
   },
   "loan_check": {
     "title": "Loan Check",
@@ -94,7 +95,8 @@
     "forecast_title": "Upcoming 4-week forecast",
     "money_in": "Expected in",
     "money_out": "Expected out",
-    "expected_balance": "Projected balance"
+    "expected_balance": "Projected balance",
+    "low_confidence_notice": "This estimate is less reliable for your income pattern."
   },
   "path": {
     "title": "Path to Ready",

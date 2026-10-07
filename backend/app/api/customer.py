@@ -135,6 +135,7 @@ def get_customer_safe_range(customer_id: str) -> SafeRangeResponse:
         stressed_high=range_result.stressed_high,
         basis_months=range_result.basis_months,
         basis_sentence=range_result.basis_sentence,
+        low_confidence=range_result.low_confidence,
         meta=get_meta(cfg),
     )
 
@@ -203,6 +204,7 @@ def get_customer_calendar(customer_id: str) -> CalendarResponse:
         recommended_window=cal_result.recommended_window,
         avoid_weeks=cal_result.avoid_weeks,
         heads_up=heads_up,
+        low_confidence=cal_result.low_confidence,
         meta=get_meta(cfg),
     )
 

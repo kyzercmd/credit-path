@@ -97,7 +97,6 @@ describe("Task 10: Admin Panel Verification (U1-U6)", () => {
     assert.ok(content.includes("details"), "Must display details");
     assert.ok(content.includes("timestamp"), "Must display timestamp");
   });
-
   test("Admin page organizes all 6 sections, navigation, skeletons, and error handling", () => {
     const content = fs.readFileSync(path.resolve("src/app/admin/page.tsx"), "utf-8");
     assert.ok(content.includes("FunnelTable"), "Must include FunnelTable");
@@ -110,4 +109,34 @@ describe("Task 10: Admin Panel Verification (U1-U6)", () => {
     assert.ok(content.includes("ErrorState"), "Must include ErrorState handler");
     assert.ok(content.includes("data-admin-page"), "Must mark page with data-admin-page attribute");
   });
+
+  test("ForecastQuality MAE Edge sign coloring, WAPE comparison, low-confidence badge, and tier tags", () => {
+    const content = fs.readFileSync(path.resolve("src/components/admin/ForecastQuality.tsx"), "utf-8");
+    // Sign logic for MAE Edge
+    assert.ok(content.includes("edge > 0"), "Must test positive edge");
+    assert.ok(content.includes("edge < 0"), "Must test negative edge");
+    assert.ok(content.includes("text-emerald-700"), "Must style positive edge green");
+    assert.ok(content.includes("text-red-600"), "Must style negative edge red");
+    assert.ok(content.includes("text-[#6B6B76]"), "Must style zero edge gray");
+
+    // Model WAPE comparison with Naive WAPE
+    assert.ok(
+      content.includes("Number(item.wape) > Number(item.naive_wape)") ||
+        content.includes("isWapeWorse"),
+      "Must compare Model WAPE vs Naive WAPE"
+    );
+
+    // Low confidence badge and tooltip
+    assert.ok(content.includes("Low confidence"), "Must render Low confidence badge");
+    assert.ok(
+      content.includes("Forecast is not better than a simple baseline for this group yet."),
+      "Must have exact low-confidence tooltip text"
+    );
+
+    // Persona tiers
+    assert.ok(content.includes("Primary"), "Must render Primary tier tag");
+    assert.ok(content.includes("Control"), "Must render Control tier tag");
+    assert.ok(content.includes("Next phase"), "Must render Next phase tier tag");
+  });
 });
+

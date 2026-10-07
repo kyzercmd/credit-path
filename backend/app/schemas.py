@@ -35,6 +35,7 @@ class SafeRangeResponse(BaseModel):
     stressed_high: float
     basis_months: int
     basis_sentence: str
+    low_confidence: bool = False
     meta: Meta
 
 
@@ -85,6 +86,7 @@ class CalendarResponse(BaseModel):
     recommended_window: str
     avoid_weeks: list[str]
     heads_up: HeadsUpCard | None = None
+    low_confidence: bool = False
     meta: Meta
 
 

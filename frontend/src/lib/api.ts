@@ -49,6 +49,7 @@ export interface SafeRangeResponse {
   stressed_high: number;
   basis_months: number;
   basis_sentence: string;
+  low_confidence?: boolean;
   meta: Meta;
 }
 
@@ -99,6 +100,7 @@ export interface CalendarResponse {
   recommended_window: string;
   avoid_weeks: string[];
   heads_up: HeadsUpCard | null;
+  low_confidence?: boolean;
   meta: Meta;
 }
 

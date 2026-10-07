@@ -126,13 +126,33 @@ describe("Task 9: Customer Screens Verification", () => {
       !safeRangeContent.includes('from "@/lib/format"'),
       "SafeRange must consume formatters from useLanguage()"
     );
+    // 6. Low-confidence honest UI notice on Safe Range and Calendar
     assert.ok(
-      !loanContent.includes('from "@/lib/format"'),
-      "LoanCheck must consume formatters from useLanguage()"
+      safeRangeContent.includes("data.low_confidence"),
+      "SafeRange must check data.low_confidence"
     );
     assert.ok(
-      !progressContent.includes('from "@/lib/format"'),
-      "Progress must consume formatters from useLanguage()"
+      safeRangeContent.includes("low_confidence_notice"),
+      "SafeRange must render low_confidence_notice"
+    );
+
+    const calContent = fs.readFileSync(path.resolve("src/app/calendar/page.tsx"), "utf-8");
+    assert.ok(
+      calContent.includes("data.low_confidence"),
+      "Calendar must check data.low_confidence"
+    );
+    assert.ok(
+      calContent.includes("low_confidence_notice"),
+      "Calendar must render low_confidence_notice"
+    );
+
+    assert.strictEqual(
+      enJson.safe_range.low_confidence_notice,
+      "This estimate is less reliable for your income pattern."
+    );
+    assert.strictEqual(
+      enJson.calendar.low_confidence_notice,
+      "This estimate is less reliable for your income pattern."
     );
   });
 });

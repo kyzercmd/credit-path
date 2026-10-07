@@ -30,6 +30,17 @@ class Config:
     model_version: str = "v1"
     data_as_of: str = ""                 # set after data generation
 
+    # --- Persona tiers (reporting and phase planning) ---
+    persona_tiers: dict[str, str] = field(
+        default_factory=lambda: {
+            "wage_worker": "primary",
+            "woman_led_household": "primary",
+            "salaried_user": "control",
+            "seasonal_farmer": "next_phase",
+            "informal_merchant": "next_phase",
+        }
+    )
+
     # --- Kill switch ---
     kill_safe_range: bool = False
     kill_loan_check: bool = False

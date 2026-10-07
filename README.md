@@ -1,6 +1,6 @@
 # CreditPath 🇧🇩
 
-> **A safe borrowing path for micro-merchants and the unbanked in Bangladesh.**  
+> **A safe borrowing path for Daily and weekly earners and women-led households with regular but uneven income who can afford a loan but miss payment timing in Bangladesh.**  
 > Responsible credit-readiness guidance and repayment-timing coaching, not predatory credit scoring.
 
 [![Backend Tests](https://img.shields.io/badge/backend%20tests-67%20passed-brightgreen.svg)]()
@@ -14,26 +14,40 @@
 ## 📋 Table of Contents
 
 1. [Overview & Problem Statement](#overview--problem-statement)
-2. [System Architecture](#system-architecture)
-3. [Core Pillars & Capabilities](#core-pillars--capabilities)
-4. [Empirical Evaluation Summary (Section 8)](#empirical-evaluation-summary-section-8)
-5. [Quick Start & Setup](#quick-start--setup)
-6. [API Reference](#api-reference)
-7. [Testing & Quality Assurance](#testing--quality-assurance)
-8. [Ethical AI, Privacy & Regulatory Compliance](#ethical-ai-privacy--regulatory-compliance)
+2. [Target Beneficiaries & Persona Tiers](#target-beneficiaries--persona-tiers)
+3. [System Architecture](#system-architecture)
+4. [Core Pillars & Capabilities](#core-pillars--capabilities)
+5. [Empirical Evaluation Summary (Section 8)](#empirical-evaluation-summary-section-8)
+6. [Quick Start & Setup](#quick-start--setup)
+7. [API Reference](#api-reference)
+8. [Testing & Quality Assurance](#testing--quality-assurance)
+9. [Ethical AI, Privacy & Regulatory Compliance](#ethical-ai-privacy--regulatory-compliance)
 
 ---
 
 ## 🎯 Overview & Problem Statement
 
-In emerging economies such as Bangladesh, informal micro-merchants, daily wage workers, seasonal agricultural laborers, and women-led households face severe barriers to formal financial systems:
+In emerging economies such as Bangladesh, daily and weekly wage earners, informal workers, and women-led households face severe barriers to formal financial systems:
 
 * **Predatory Digital Lending**: High-interest digital lenders evaluate opaque signals or device telemetry to extend high-risk micro-loans, trapping unbanked borrowers in debt cycles.
-* **Lack of Formal Credit Bureau Records**: Informal traders transact primarily in mobile money (bKash/Nagad) or physical cash, leaving them invisible to traditional credit scoring.
+* **Lack of Formal Credit Bureau Records**: Informal earners transact primarily in mobile money (bKash/Nagad/upay) or physical cash, leaving them invisible to traditional credit scoring despite regular earning ability.
 * **Lending vs. Guidance**: Traditional credit scores answer *"Will this person pay back the lender?"* CreditPath flips the paradigm to answer:
   > *"Is this borrower in a healthy position to take credit right now? If so, what repayment schedule is truly safe and sustainable? If not, what concrete actions will make them ready?"*
 
 **CreditPath is a borrower-first coach, not a loan underwriter.** It provides clear, actionable milestones, cash-flow forecasting with seasonal risk warnings, transparent recourse, and full privacy control.
+
+---
+
+## 👥 Target Beneficiaries & Persona Tiers
+
+CreditPath is explicitly calibrated for:
+* **Primary Beneficiaries**:
+  * **Wage Workers**: Daily and weekly earners with regular work who experience timing mismatches between income arrival and fixed repayment dates.
+  * **Woman-Led Households**: Home-based producers and informal earner households managing regular, diverse micro-inflows.
+* **Control Cohort**:
+  * **Salaried Users**: Fixed monthly earners used to benchmark model predictability and baseline error reduction.
+* **Next Phase (Deferred Cohorts)**:
+  * **Seasonal Farmers & Informal Merchants**: These cohorts experience lumpy multi-month cash-flow cycles (harvests, crop sales, bulk inventory turnarounds) and high volatility. Standard 8-week horizon forecasting does not yet reliably beat simple baselines for these groups. They are marked **Next Phase** with explicit low-confidence disclosures until multi-season agricultural tracking and extended trade-cycle models are integrated in Phase 2.
 
 ---
 
@@ -53,7 +67,7 @@ CreditPath is engineered as a decoupled modern stack with distinct customer coac
 │  • 3-Check Readiness Status      │  • Forecast Quality vs Baseline     │
 │  • Safe Repayment Range          │  • Fairness Disparity Audit         │
 │  • Loan Check Simulator          │  • Dynamic Threshold Config         │
-│  • 12-Week Repayment Calendar    │  • Emergency Kill Switches          │
+│  • 8-Week Repayment Calendar     │  • Emergency Kill Switches          │
 │  • Path to Ready Recourse        │  • Immutable Audit Trail            │
 └──────────────────────────────────┴─────────────────────────────────────┘
                                   ▲
@@ -99,13 +113,13 @@ $$\text{Max Safe Repayment} = \min\left(\text{Monthly Free Cash Flow} \times \te
 * Guarantees the borrower will not default even under sudden seasonal downturns or medical emergencies.
 
 ### 3. Loan Check Simulator (Jargon-Free Alternatives)
-Micro-merchants can test any proposed loan amount (e.g., ৳10,000) and tenure (e.g., 3 months):
+Borrowers can test any proposed loan amount (e.g., ৳10,000) and tenure (e.g., 3 months):
 * **Instant Verdicts**: `Comfortable` (green), `Borderline` (amber), or `Too High` (rose).
 * **Plain Language Explanations**: Explains cash flow impacts without terms like *debt-to-income*, *amortization*, or *EIR*.
 * **Nearest Comfortable Alternatives**: If an installment is too high, the engine computes alternative loans with longer tenures or lower principals that fit within the safe range.
 
-### 4. 12-Week Cash Flow Forecasting & Repayment Timing
-* Dual LightGBM models forecast expected weekly inflows and outflows over a 12-week forward window.
+### 4. 8-Week Cash Flow Forecasting & Repayment Timing
+* Dual LightGBM models forecast expected weekly inflows and outflows over an 8-week forward window.
 * Recommends optimal repayment weeks (marked green in the calendar) and flags high-risk weeks (e.g. pre-harvest periods or lean seasonal stretches).
 * Prevents scheduled collections during weeks with negative projected net cash flow.
 
@@ -248,7 +262,7 @@ All responses include standard `meta` headers containing `model_version`, `data_
   ```json
   { "principal": 15000, "tenure_months": 3 }
   ```
-* `GET /customer/{id}/calendar` — 12-week projected weekly inflow, outflow, and recommended repayment timing windows.
+* `GET /customer/{id}/calendar` — 8-week projected weekly inflow, outflow, and recommended repayment timing windows.
 * `GET /customer/{id}/path` — Concrete, actionable steps to achieve readiness for non-ready borrowers.
 * `GET /customer/{id}/progress` — Multi-month historical readiness progression and bill discipline trend.
 * `POST /customer/{id}/consent` — Update borrower consent (`opt_in` or `opt_out`).

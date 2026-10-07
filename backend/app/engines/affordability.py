@@ -32,6 +32,7 @@ class SafeRangeResult:
     basis_months: int
     basis_sentence: str
     meta: Meta
+    low_confidence: bool = False
 
 
 @dataclass
@@ -133,6 +134,21 @@ class AffordabilityEngine:
             data_as_of=get_data_as_of(),
             disclaimer=cfg.disclaimer,
         )
+        # Determine if customer belongs to a low-confidence forecasting persona cohort
+        low_confidence = False
+        try:
+            from app.data.loader import load_data
+            from app.api.admin import get_forecast_quality
+            d_data = load_data()
+            cust_df = d_data.get("customers")
+            if cust_df is not None:
+                row = cust_df[cust_df["customer_id"] == customer_id]
+                if len(row) > 0:
+                    persona = str(row["persona"].iloc[0])
+                    fq = get_forecast_quality()
+                    low_confidence = bool(fq.by_persona.get(persona, {}).get("low_confidence", False))
+        except Exception:
+            low_confidence = False
 
         return SafeRangeResult(
             customer_id=customer_id,
@@ -142,6 +158,7 @@ class AffordabilityEngine:
             stressed_high=stressed_high,
             basis_months=3,
             basis_sentence="Based on your last 3 months of wallet activity.",
+            low_confidence=low_confidence,
             meta=meta,
         )
 

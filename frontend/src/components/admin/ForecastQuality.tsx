@@ -163,15 +163,70 @@ export function ForecastQuality({ data, isLoading = false }: ForecastQualityProp
                   item.naive_wape != null ? `${(Number(item.naive_wape) * 100).toFixed(1)}%` : "N/A";
 
                 let edgePct = "—";
+                let edgeColor = "text-[#6B6B76]";
                 if (item.mae != null && item.naive_mae != null && Number(item.naive_mae) > 0) {
                   const edge = ((Number(item.naive_mae) - Number(item.mae)) / Number(item.naive_mae)) * 100;
                   edgePct = `${edge >= 0 ? "+" : ""}${edge.toFixed(1)}%`;
+                  if (edge > 0) {
+                    edgeColor = "text-emerald-700 font-semibold";
+                  } else if (edge < 0) {
+                    edgeColor = "text-red-600 font-semibold";
+                  } else {
+                    edgeColor = "text-[#6B6B76] font-medium";
+                  }
                 }
+
+                const isWapeWorse =
+                  item.wape != null &&
+                  item.naive_wape != null &&
+                  Number(item.wape) > Number(item.naive_wape);
+                const wapeColor = isWapeWorse
+                  ? "text-red-600 font-semibold"
+                  : "text-[#1A1A1F] font-semibold";
+
+                const rawTier = item.persona_tier || (
+                  key === "salaried_user"
+                    ? "control"
+                    : ["seasonal_farmer", "informal_merchant"].includes(key)
+                    ? "next_phase"
+                    : "primary"
+                );
+                const tierLabel =
+                  rawTier === "primary"
+                    ? "Primary"
+                    : rawTier === "control"
+                    ? "Control"
+                    : "Next phase";
+                const tierBadgeClass =
+                  rawTier === "primary"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : rawTier === "control"
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200";
+
+                const isLowConfidence = Boolean(
+                  item.low_confidence ?? (
+                    item.mae != null && item.naive_mae != null && Number(item.mae) > Number(item.naive_mae)
+                  )
+                );
 
                 return (
                   <tr key={key} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-4 py-3.5">
-                      <div className="font-medium text-[#1A1A1F]">{metaInfo.title}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-[#1A1A1F]">{metaInfo.title}</span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tierBadgeClass}`}>
+                          {tierLabel}
+                        </span>
+                        {isLowConfidence && (
+                          <span
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200 cursor-help"
+                            title="Forecast is not better than a simple baseline for this group yet."
+                          >
+                            Low confidence
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-[#6B6B76] mt-0.5">{metaInfo.desc}</div>
                     </td>
                     <td className="px-4 py-3.5 text-right font-medium text-[#6B6B76]">
@@ -179,10 +234,10 @@ export function ForecastQuality({ data, isLoading = false }: ForecastQualityProp
                     </td>
                     <td className="px-4 py-3.5 text-right font-semibold text-[#1A1A1F]">{mae}</td>
                     <td className="px-4 py-3.5 text-right text-[#6B6B76]">{naiveMae}</td>
-                    <td className="px-4 py-3.5 text-right font-medium text-emerald-700">
+                    <td className={`px-4 py-3.5 text-right ${edgeColor}`}>
                       {edgePct}
                     </td>
-                    <td className="px-4 py-3.5 text-right font-semibold text-[#1A1A1F]">{wape}</td>
+                    <td className={`px-4 py-3.5 text-right ${wapeColor}`}>{wape}</td>
                     <td className="px-4 py-3.5 text-right text-[#6B6B76]">{naiveWape}</td>
                   </tr>
                 );
