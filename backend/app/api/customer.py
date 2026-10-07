@@ -161,13 +161,18 @@ def post_customer_loan_check(
         amount=payload.amount,
         tenor_months=payload.tenor_months,
         config=cfg,
+        financing_structure=payload.financing_structure,
+        total_repayment=payload.total_repayment,
+        provider_fees=payload.provider_fees,
     )
     return LoanCheckResponse(
         customer_id=customer_id,
         amount=loan_result.amount,
         tenor_months=loan_result.tenor_months,
+        financing_structure=loan_result.financing_structure,
         monthly_payment=loan_result.monthly_payment,
         total_repayment=loan_result.total_repayment,
+        extra_cost=loan_result.extra_cost,
         surplus_share=loan_result.surplus_share,
         verdict=loan_result.verdict,
         verdict_reason=loan_result.verdict_reason,

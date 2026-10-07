@@ -82,7 +82,22 @@
     "verdict_title": "Verdict",
     "nearest_title": "Alternative that fits",
     "nearest_desc": "৳{amount} over {tenor} months (৳{payment}/mo) would be comfortable.",
-    "stress_note": "In a tighter month"
+    "stress_note": "In a tighter month",
+    "financing_type": "Financing type",
+    "financing_conventional": "Conventional",
+    "financing_fixed_payment": "Fixed payment",
+    "financing_interest_free": "Interest-free",
+    "total_repayment": "Total agreed repayment",
+    "total_agreed_label": "Total agreed repayment",
+    "extra_cost": "Extra cost",
+    "extra_cost_label": "Extra cost",
+    "provider_fees": "Provider fees (optional)",
+    "provider_fees_label": "Provider fees (optional)",
+    "disclaimer": "CreditPath checks affordability for any financing structure. It does not certify products as Shariah-compliant. Late fees are not modelled. Guidance, not an offer.",
+    "neutral_disclaimer": "CreditPath checks affordability for any financing structure. It does not certify products as Shariah-compliant. Late fees are not modelled. Guidance, not an offer.",
+    "total_below_amount": "Total repayment must be greater than or equal to amount.",
+    "cost_rate": "Illustrative cost rate",
+    "illustrative_cost_rate": "Illustrative cost rate"
   },
   "calendar": {
     "title": "Repayment Calendar",
