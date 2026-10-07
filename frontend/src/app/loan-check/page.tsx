@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useConsent } from "@/contexts/ConsentContext";
-import { postLoanCheck, LoanCheckResponse, ApiError } from "@/lib/api";
+import { postLoanCheck, LoanCheckResponse, ApiError, FinancingStructure } from "@/lib/api";
 import { LoanSliders } from "@/components/LoanSliders";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card } from "@/components/Card";
@@ -24,6 +24,16 @@ export default function LoanCheckPage() {
   const [amount, setAmount] = useState<number>(10000);
   const [tenor, setTenor] = useState<number>(6);
 
+  // Financing structure inputs (request-only; never stored on the profile).
+  const [structure, setStructure] = useState<FinancingStructure>("conventional");
+  const [totalAgreed, setTotalAgreed] = useState<string>("");
+  const [providerFees, setProviderFees] = useState<string>("0");
+  const financingRef = useRef<{ structure: FinancingStructure; totalAgreed: string; providerFees: string }>({
+    structure: "conventional",
+    totalAgreed: "",
+    providerFees: "0",
+  });
+
   const [data, setData] = useState<LoanCheckResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [calculating, setCalculating] = useState<boolean>(false);
@@ -34,6 +44,17 @@ export default function LoanCheckPage() {
   const reqSeqRef = useRef<number>(0);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const buildFinancing = () => {
+    const f = financingRef.current;
+    if (f.structure === "fixed_payment") {
+      return { financing_structure: f.structure, total_repayment: Number(f.totalAgreed) || undefined };
+    }
+    if (f.structure === "interest_free") {
+      return { financing_structure: f.structure, provider_fees: Number(f.providerFees) || 0 };
+    }
+    return { financing_structure: f.structure };
+  };
+
   const runCheck = useCallback(
     async (amt: number, tnr: number, isInitial = false) => {
       const seq = ++reqSeqRef.current;
@@ -43,7 +64,7 @@ export default function LoanCheckPage() {
       setIsKilled(false);
 
       try {
-        const res = await postLoanCheck(customerId, amt, tnr);
+        const res = await postLoanCheck(customerId, amt, tnr, buildFinancing());
         if (seq === reqSeqRef.current) {
           setData(res);
         }
@@ -51,6 +72,8 @@ export default function LoanCheckPage() {
         if (seq === reqSeqRef.current) {
           if (err instanceof ApiError && err.status === 403) {
             setIsKilled(true);
+          } else if (err instanceof ApiError && err.status === 422) {
+            setError(t("loan_check.total_below_amount"));
           } else {
             setError(err?.message || "Failed to calculate loan check");
           }
@@ -62,6 +85,7 @@ export default function LoanCheckPage() {
         }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [customerId]
   );
 
@@ -98,6 +122,27 @@ export default function LoanCheckPage() {
   const handleTenorChange = (newTenor: number) => {
     setTenor(newTenor);
     scheduleCheck(amount, newTenor);
+  };
+
+  const handleStructureChange = (next: FinancingStructure) => {
+    setStructure(next);
+    // Pre-fill the agreed total with the amount the user already chose (no computation).
+    const nextTotal = next === "fixed_payment" && !totalAgreed ? String(amount) : totalAgreed;
+    setTotalAgreed(nextTotal);
+    financingRef.current = { ...financingRef.current, structure: next, totalAgreed: nextTotal };
+    scheduleCheck(amount, tenor);
+  };
+
+  const handleTotalAgreedChange = (value: string) => {
+    setTotalAgreed(value);
+    financingRef.current = { ...financingRef.current, totalAgreed: value };
+    scheduleCheck(amount, tenor);
+  };
+
+  const handleProviderFeesChange = (value: string) => {
+    setProviderFees(value);
+    financingRef.current = { ...financingRef.current, providerFees: value };
+    scheduleCheck(amount, tenor);
   };
 
   const applyNearestComfortable = () => {
@@ -187,14 +232,77 @@ export default function LoanCheckPage() {
         </p>
       </div>
 
-      {/* Card 1: Sliders */}
+      {/* Card 1: Financing type + Sliders */}
       <Card>
+        <div className="mb-5" data-financing-selector>
+          <span className="block text-xs font-semibold text-[#1A1A1F] mb-2">
+            {t("loan_check.financing_type")}
+          </span>
+          {/* TODO: native-speaker review - Bangla translations for financing structures, labels, and disclaimers */}
+          <div role="radiogroup" className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#F3F4F6]">
+            {(["conventional", "fixed_payment", "interest_free"] as FinancingStructure[]).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                role="radio"
+                aria-checked={structure === opt}
+                onClick={() => handleStructureChange(opt)}
+                className={`text-sm text-center whitespace-normal px-2 py-2 rounded-lg font-semibold transition-colors ${
+                  structure === opt
+                    ? "bg-white text-[#1A1A1F] shadow-sm"
+                    : "text-[#6B6B76] hover:text-[#1A1A1F]"
+                }`}
+              >
+                {t(`loan_check.financing_${opt}`)}
+              </button>
+            ))}
+          </div>
+
+          {structure === "fixed_payment" && (
+            <label className="block mt-3">
+              <span className="block text-xs font-semibold text-[#1A1A1F] mb-1">
+                {t("loan_check.total_repayment")}
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={totalAgreed}
+                onChange={(e) => handleTotalAgreedChange(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-[#E8E8EC] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              />
+            </label>
+          )}
+
+          {structure === "interest_free" && (
+            <label className="block mt-3">
+              <span className="block text-xs font-semibold text-[#1A1A1F] mb-1">
+                {t("loan_check.provider_fees")}
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={providerFees}
+                onChange={(e) => handleProviderFeesChange(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-[#E8E8EC] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              />
+            </label>
+          )}
+        </div>
+
         <LoanSliders
           amount={amount}
           tenor={tenor}
           onAmountChange={handleAmountChange}
           onTenorChange={handleTenorChange}
         />
+
+        {error && data && (
+          <p className="mt-3 text-xs text-red-600" role="alert">
+            {error}
+          </p>
+        )}
       </Card>
 
       {/* Card 2: Verdict & Monthly Breakdown */}
@@ -246,11 +354,17 @@ export default function LoanCheckPage() {
             )}
           </div>
 
-          {/* Totals Summary Row */}
+          {/* Totals Summary Row (values come from the API, never computed here) */}
           <div className="flex justify-between items-center py-2.5 px-3 bg-[#F8F9FA] rounded-xl text-xs">
-            <span className="text-[#6B6B76]">{t("loan_check.total_repayment_label")}</span>
+            <span className="text-[#6B6B76]">{t("loan_check.total_repayment")}</span>
             <span className="font-bold text-[#1A1A1F]">
               {formatCurrency(data.total_repayment)}
+            </span>
+          </div>
+          <div className="mt-1.5 flex justify-between items-center py-2.5 px-3 bg-[#F8F9FA] rounded-xl text-xs">
+            <span className="text-[#6B6B76]">{t("loan_check.extra_cost")}</span>
+            <span className="font-bold text-[#1A1A1F]">
+              {formatCurrency(data.extra_cost)}
             </span>
           </div>
 
@@ -275,6 +389,10 @@ export default function LoanCheckPage() {
               </button>
             </div>
           )}
+
+          <p className="mt-4 text-[11px] leading-relaxed text-[#6B6B76]" data-financing-disclaimer>
+            {t("loan_check.disclaimer")}
+          </p>
         </Card>
       )}
 

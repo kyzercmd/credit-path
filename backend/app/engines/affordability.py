@@ -32,6 +32,7 @@ class SafeRangeResult:
     basis_months: int
     basis_sentence: str
     meta: Meta
+    low_confidence: bool = False
 
 
 @dataclass
@@ -48,6 +49,8 @@ class LoanCheckResult:
     stress_reason: str
     nearest_comfortable: NearestComfortable | None
     meta: Meta
+    financing_structure: str = "conventional"
+    extra_cost: float = 0.0
 
 
 def calculate_amortization(amount: float, tenor_months: int, annual_rate: float) -> float:
@@ -65,6 +68,45 @@ def calculate_amortization(amount: float, tenor_months: int, annual_rate: float)
         pmt = amount / float(tenor_months)
 
     return round(float(pmt), 2)
+
+
+FINANCING_STRUCTURES = ("conventional", "fixed_payment", "interest_free")
+
+
+def compute_financing_terms(
+    amount: float,
+    tenor_months: int,
+    financing_structure: str = "conventional",
+    annual_rate: float = 0.0,
+    total_repayment: float | None = None,
+    provider_fees: float = 0.0,
+) -> tuple[float, float, float]:
+    """Return (monthly_payment, total_repayment, extra_cost) for a financing structure.
+
+    - conventional: annuity formula at the illustrative cost rate (unchanged behaviour).
+    - fixed_payment: agreed total repaid in equal instalments; extra_cost = total - amount.
+    - interest_free: amount repaid in equal instalments; extra_cost = provider_fees.
+    """
+    if tenor_months <= 0:
+        raise ValueError("tenor_months must be positive.")
+
+    if financing_structure == "conventional":
+        pmt = calculate_amortization(amount, tenor_months, annual_rate)
+        total = round(pmt * tenor_months, 2)
+        return pmt, total, round(total - amount, 2)
+
+    if financing_structure == "fixed_payment":
+        if total_repayment is None or total_repayment < amount:
+            raise ValueError("total_repayment must be provided and >= amount for fixed_payment.")
+        pmt = round(total_repayment / tenor_months, 2)
+        return pmt, round(total_repayment, 2), round(total_repayment - amount, 2)
+
+    if financing_structure == "interest_free":
+        fees = max(0.0, float(provider_fees or 0.0))
+        pmt = round(amount / tenor_months, 2)
+        return pmt, round(amount + fees, 2), round(fees, 2)
+
+    raise ValueError(f"Unknown financing_structure: {financing_structure}")
 
 
 class AffordabilityEngine:
@@ -133,6 +175,21 @@ class AffordabilityEngine:
             data_as_of=get_data_as_of(),
             disclaimer=cfg.disclaimer,
         )
+        # Determine if customer belongs to a low-confidence forecasting persona cohort
+        low_confidence = False
+        try:
+            from app.data.loader import load_data
+            from app.api.admin import get_forecast_quality
+            d_data = load_data()
+            cust_df = d_data.get("customers")
+            if cust_df is not None:
+                row = cust_df[cust_df["customer_id"] == customer_id]
+                if len(row) > 0:
+                    persona = str(row["persona"].iloc[0])
+                    fq = get_forecast_quality()
+                    low_confidence = bool(fq.by_persona.get(persona, {}).get("low_confidence", False))
+        except Exception:
+            low_confidence = False
 
         return SafeRangeResult(
             customer_id=customer_id,
@@ -142,6 +199,7 @@ class AffordabilityEngine:
             stressed_high=stressed_high,
             basis_months=3,
             basis_sentence="Based on your last 3 months of wallet activity.",
+            low_confidence=low_confidence,
             meta=meta,
         )
 
@@ -153,19 +211,30 @@ class AffordabilityEngine:
         config: Config | None = None,
         cutoff_date: str = "2025-12-31",
         customer_features: pd.DataFrame | None = None,
+        financing_structure: str = "conventional",
+        total_repayment: float | None = None,
+        provider_fees: float = 0.0,
     ) -> LoanCheckResult:
         """Evaluate a specific loan proposal against cash-flow spare money and stress bounds."""
         cfg = config or self.config
         if cfg.kill_loan_check:
             raise RuntimeError("Loan check calculation is temporarily disabled by admin kill-switch.")
 
+        # Validate inputs before running the forecaster.
+        pmt, total_repayment, extra_cost = compute_financing_terms(
+            amount=amount,
+            tenor_months=tenor_months,
+            financing_structure=financing_structure,
+            annual_rate=cfg.illustrative_rate,
+            total_repayment=total_repayment,
+            provider_fees=provider_fees,
+        )
+
         monthly_inflow, monthly_outflow = self._get_forecaster_projections(
             customer_id, cutoff_date=cutoff_date, customer_features=customer_features
         )
 
         surplus = max(0.0, monthly_inflow - monthly_outflow)
-        pmt = calculate_amortization(amount, tenor_months, cfg.illustrative_rate)
-        total_repayment = round(pmt * tenor_months, 2)
 
         if surplus > 0:
             surplus_share = round(pmt / surplus, 4)
@@ -219,12 +288,20 @@ class AffordabilityEngine:
         # Nearest comfortable search if proposal is Tight or Too much
         nearest_comfortable: NearestComfortable | None = None
         if verdict in ("Tight", "Too much"):
+            if financing_structure == "conventional":
+                search_rate, payment_scale = cfg.illustrative_rate, 1.0
+            elif financing_structure == "fixed_payment":
+                # Keep the same agreed total-to-amount ratio for alternatives.
+                search_rate, payment_scale = 0.0, total_repayment / amount
+            else:  # interest_free
+                search_rate, payment_scale = 0.0, 1.0
             nearest_comfortable = self._find_nearest_comfortable(
                 amount=amount,
                 tenor_months=tenor_months,
                 surplus=surplus,
                 affordability_cap=cfg.affordability_cap,
-                rate=cfg.illustrative_rate,
+                rate=search_rate,
+                payment_scale=payment_scale,
             )
 
         meta = Meta(
@@ -246,6 +323,8 @@ class AffordabilityEngine:
             stress_reason=stress_reason,
             nearest_comfortable=nearest_comfortable,
             meta=meta,
+            financing_structure=financing_structure,
+            extra_cost=extra_cost,
         )
 
     def _find_nearest_comfortable(
@@ -255,6 +334,7 @@ class AffordabilityEngine:
         surplus: float,
         affordability_cap: float,
         rate: float,
+        payment_scale: float = 1.0,
     ) -> NearestComfortable | None:
         """Search for closest comfortable amount and tenor configuration."""
         max_safe_pmt = surplus * affordability_cap
@@ -263,7 +343,7 @@ class AffordabilityEngine:
 
         # 1. First attempt: keep requested amount, extend tenor up to 36 months
         for t in range(tenor_months + 1, 37):
-            cand_pmt = calculate_amortization(amount, t, rate)
+            cand_pmt = round(payment_scale * calculate_amortization(amount, t, rate), 2)
             if cand_pmt <= max_safe_pmt:
                 return NearestComfortable(
                     amount=amount,
@@ -281,7 +361,7 @@ class AffordabilityEngine:
             cand_amt = float(cand_amt)
             # Try from requested tenor up to 36
             for t in range(tenor_months, 37):
-                cand_pmt = calculate_amortization(cand_amt, t, rate)
+                cand_pmt = round(payment_scale * calculate_amortization(cand_amt, t, rate), 2)
                 if cand_pmt <= max_safe_pmt:
                     return NearestComfortable(
                         amount=cand_amt,
@@ -290,7 +370,7 @@ class AffordabilityEngine:
                     )
 
         # 3. Last fallback: test at 1000 with max tenor 36
-        cand_pmt = calculate_amortization(1000.0, 36, rate)
+        cand_pmt = round(payment_scale * calculate_amortization(1000.0, 36, rate), 2)
         if cand_pmt <= max_safe_pmt:
             return NearestComfortable(
                 amount=1000.0,
@@ -317,6 +397,9 @@ def evaluate_loan_check(
     tenor_months: int,
     config: Config | None = None,
     cutoff_date: str = "2025-12-31",
+    financing_structure: str = "conventional",
+    total_repayment: float | None = None,
+    provider_fees: float = 0.0,
 ) -> LoanCheckResult:
     """Convenience function to evaluate loan check."""
     engine = AffordabilityEngine(config=config)
@@ -326,5 +409,8 @@ def evaluate_loan_check(
         tenor_months=tenor_months,
         config=config,
         cutoff_date=cutoff_date,
+        financing_structure=financing_structure,
+        total_repayment=total_repayment,
+        provider_fees=provider_fees,
     )
 

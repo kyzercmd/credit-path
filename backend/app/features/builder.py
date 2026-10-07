@@ -31,7 +31,14 @@ FEATURE_COLUMNS = [
     "lag_4_inflow",
     "lag_1_outflow",
     "lag_2_outflow",
+    "lag_3_outflow",
+    "lag_4_outflow",
+    "inflow_roll_mean_4",
+    "inflow_roll_std_4",
+    "outflow_roll_mean_4",
+    "outflow_roll_std_4",
     "lag_1_balance",
+    "day_of_month",
     "week_of_month",
     "month",
     "is_month_end",
@@ -149,6 +156,7 @@ def build_features(
         is_har = int(month in [3, 9])
         cal_rows.append({
             "week": w,
+            "day_of_month": thu.day,
             "week_of_month": wom,
             "month": month,
             "is_month_end": is_me,
@@ -227,7 +235,15 @@ def build_features(
     df["lag_4_inflow"] = df.groupby("customer_id", sort=False)["weekly_inflow"].shift(4).fillna(0.0)
     df["lag_1_outflow"] = df.groupby("customer_id", sort=False)["weekly_outflow"].shift(1).fillna(0.0)
     df["lag_2_outflow"] = df.groupby("customer_id", sort=False)["weekly_outflow"].shift(2).fillna(0.0)
+    df["lag_3_outflow"] = df.groupby("customer_id", sort=False)["weekly_outflow"].shift(3).fillna(0.0)
+    df["lag_4_outflow"] = df.groupby("customer_id", sort=False)["weekly_outflow"].shift(4).fillna(0.0)
     df["lag_1_balance"] = df.groupby("customer_id", sort=False)["balance_mean"].shift(1).fillna(0.0)
+
+    # Rolling 4-week mean and std of past inflow and outflow (strictly prior to current week)
+    df["inflow_roll_mean_4"] = df.groupby("customer_id", sort=False)["weekly_inflow"].shift(1).rolling(4, min_periods=1).mean().fillna(0.0)
+    df["inflow_roll_std_4"] = df.groupby("customer_id", sort=False)["weekly_inflow"].shift(1).rolling(4, min_periods=1).std().fillna(0.0)
+    df["outflow_roll_mean_4"] = df.groupby("customer_id", sort=False)["weekly_outflow"].shift(1).rolling(4, min_periods=1).mean().fillna(0.0)
+    df["outflow_roll_std_4"] = df.groupby("customer_id", sort=False)["weekly_outflow"].shift(1).rolling(4, min_periods=1).std().fillna(0.0)
 
     # 9. Income regularity ratio (rolling 12-week proportion with inflow > 0)
     df["has_income"] = (df["weekly_inflow"] > 0).astype(float)
@@ -280,14 +296,17 @@ def _format_feature_dtypes(df: pd.DataFrame) -> pd.DataFrame:
         "weekly_inflow", "weekly_outflow", "balance_mean", "balance_min",
         "income_regularity_ratio", "bill_on_time_ratio", "lag_1_inflow",
         "lag_2_inflow", "lag_3_inflow", "lag_4_inflow", "lag_1_outflow",
-        "lag_2_outflow", "lag_1_balance",
+        "lag_2_outflow", "lag_3_outflow", "lag_4_outflow",
+        "inflow_roll_mean_4", "inflow_roll_std_4",
+        "outflow_roll_mean_4", "outflow_roll_std_4",
+        "lag_1_balance",
     ]
     for fc in float_cols:
         if fc in df.columns:
             df[fc] = df[fc].fillna(0.0).astype(float)
 
     int_cols = [
-        "week", "months_active", "week_of_month", "month",
+        "week", "months_active", "day_of_month", "week_of_month", "month",
         "is_month_end", "is_eid_period", "is_harvest_period",
         "day_of_week_mode", "shortfall_next_week",
     ]

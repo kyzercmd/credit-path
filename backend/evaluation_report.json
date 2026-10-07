@@ -5,59 +5,98 @@
   "forecast_metrics": {
     "disclaimer": "synthetic data, relative comparison",
     "overall": {
-      "forecaster_mae": 2473.81,
-      "forecaster_wape": 0.5505,
+      "forecaster_mae": 2145.77,
+      "forecaster_wape": 0.4775,
       "naive_mae": 3163.23,
       "naive_wape": 0.7039,
-      "wape_reduction_pct": 21.8
+      "seasonal_naive_mae": 3178.79,
+      "seasonal_naive_wape": 0.7073,
+      "stronger_naive_mae": 3163.23,
+      "stronger_naive_wape": 0.7039,
+      "wape_reduction_pct": 32.2
     },
     "by_persona": {
       "wage_worker": {
         "customers": 146,
-        "forecaster_mae": 2500.71,
-        "forecaster_wape": 0.5459,
+        "forecaster_mae": 2044.21,
+        "forecaster_wape": 0.4462,
         "naive_mae": 2617.84,
         "naive_wape": 0.5714,
-        "wape_reduction_pct": 4.5
+        "seasonal_naive_mae": 2840.4,
+        "seasonal_naive_wape": 0.62,
+        "stronger_naive_mae": 2617.84,
+        "stronger_naive_wape": 0.5714,
+        "mae_edge_pct": 21.9,
+        "wape_reduction_pct": 21.9,
+        "low_confidence": false,
+        "persona_tier": "primary"
       },
       "seasonal_farmer": {
         "customers": 80,
-        "forecaster_mae": 2385.16,
-        "forecaster_wape": 1.5319,
+        "forecaster_mae": 1790.38,
+        "forecaster_wape": 1.1499,
         "naive_mae": 2076.63,
         "naive_wape": 1.3338,
-        "wape_reduction_pct": -14.9
+        "seasonal_naive_mae": 4315.59,
+        "seasonal_naive_wape": 2.7718,
+        "stronger_naive_mae": 2076.63,
+        "stronger_naive_wape": 1.3338,
+        "mae_edge_pct": 13.8,
+        "wape_reduction_pct": 13.8,
+        "low_confidence": false,
+        "persona_tier": "next_phase"
       },
       "informal_merchant": {
         "customers": 132,
-        "forecaster_mae": 2541.63,
-        "forecaster_wape": 0.4384,
+        "forecaster_mae": 2355.48,
+        "forecaster_wape": 0.4063,
         "naive_mae": 2174.65,
         "naive_wape": 0.3751,
-        "wape_reduction_pct": -16.9
+        "seasonal_naive_mae": 2610.19,
+        "seasonal_naive_wape": 0.4502,
+        "stronger_naive_mae": 2174.65,
+        "stronger_naive_wape": 0.3751,
+        "mae_edge_pct": -8.3,
+        "wape_reduction_pct": -8.3,
+        "low_confidence": true,
+        "persona_tier": "next_phase"
       },
       "woman_led_household": {
         "customers": 63,
-        "forecaster_mae": 1479.79,
-        "forecaster_wape": 0.4882,
+        "forecaster_mae": 1174.17,
+        "forecaster_wape": 0.3874,
         "naive_mae": 1981.11,
         "naive_wape": 0.6536,
-        "wape_reduction_pct": 25.3
+        "seasonal_naive_mae": 2135.3,
+        "seasonal_naive_wape": 0.7045,
+        "stronger_naive_mae": 1981.11,
+        "stronger_naive_wape": 0.6536,
+        "mae_edge_pct": 40.7,
+        "wape_reduction_pct": 40.7,
+        "low_confidence": false,
+        "persona_tier": "primary"
       },
       "salaried_user": {
         "customers": 79,
-        "forecaster_mae": 3193.27,
-        "forecaster_wape": 0.5072,
+        "forecaster_mae": 3117.81,
+        "forecaster_wape": 0.4952,
         "naive_mae": 7866.05,
         "naive_wape": 1.2494,
-        "wape_reduction_pct": 59.4
+        "seasonal_naive_mae": 4435.19,
+        "seasonal_naive_wape": 0.7045,
+        "stronger_naive_mae": 4435.19,
+        "stronger_naive_wape": 0.7045,
+        "mae_edge_pct": 29.7,
+        "wape_reduction_pct": 29.7,
+        "low_confidence": false,
+        "persona_tier": "control"
       }
     },
     "irregular_seasonal": {
       "customers": 212,
-      "forecaster_wape": 0.5914,
+      "forecaster_wape": 0.5103,
       "naive_wape": 0.5093,
-      "wape_reduction_pct": -16.1
+      "wape_reduction_pct": -0.2
     }
   },
   "ready_rule_validity": {
@@ -77,9 +116,9 @@
   "affordability_calibration": {
     "disclaimer": "synthetic data, relative comparison",
     "sample_size": 500,
-    "comfortable_loans": 173,
-    "shortfalls_in_simulation": 65,
-    "shortfall_rate": 0.3757,
+    "comfortable_loans": 188,
+    "shortfalls_in_simulation": 32,
+    "shortfall_rate": 0.1702,
     "calibration_status": "Caution"
   },
   "fairness_audit": {
@@ -89,14 +128,14 @@
         "group": "male",
         "count": 351,
         "ready_rate": 0.1652,
-        "forecast_error": 0.567,
+        "forecast_error": 0.4956,
         "false_not_yet_rate": 0.5802
       },
       {
         "group": "female",
         "count": 149,
         "ready_rate": 0.1342,
-        "forecast_error": 0.4961,
+        "forecast_error": 0.4179,
         "false_not_yet_rate": 0.3643
       }
     ],
@@ -105,14 +144,14 @@
         "group": "urban",
         "count": 420,
         "ready_rate": 0.1833,
-        "forecast_error": 0.4929,
+        "forecast_error": 0.438,
         "false_not_yet_rate": 0.4023
       },
       {
         "group": "rural",
         "count": 80,
         "ready_rate": 0.0125,
-        "forecast_error": 1.5319,
+        "forecast_error": 1.1499,
         "false_not_yet_rate": 1.0
       }
     ],
@@ -121,35 +160,35 @@
         "group": "18-25",
         "count": 95,
         "ready_rate": 0.1368,
-        "forecast_error": 0.5614,
+        "forecast_error": 0.4848,
         "false_not_yet_rate": 0.5244
       },
       {
         "group": "26-35",
         "count": 96,
         "ready_rate": 0.125,
-        "forecast_error": 0.5479,
+        "forecast_error": 0.481,
         "false_not_yet_rate": 0.5476
       },
       {
         "group": "36-45",
         "count": 98,
         "ready_rate": 0.2041,
-        "forecast_error": 0.5321,
+        "forecast_error": 0.4722,
         "false_not_yet_rate": 0.5513
       },
       {
         "group": "46-55",
         "count": 112,
         "ready_rate": 0.1607,
-        "forecast_error": 0.5525,
+        "forecast_error": 0.4751,
         "false_not_yet_rate": 0.4787
       },
       {
         "group": "56+",
         "count": 99,
         "ready_rate": 0.1515,
-        "forecast_error": 0.5601,
+        "forecast_error": 0.4753,
         "false_not_yet_rate": 0.4762
       }
     ],
@@ -181,66 +220,66 @@
     "runs": [
       {
         "seed": 42,
-        "forecaster_wape": 0.5783,
+        "forecaster_wape": 0.4915,
         "naive_wape": 0.7035,
         "ready_shortfall_rate": 0.5714,
         "not_yet_shortfall_rate": 0.5349,
         "timing_avoided_pct": 64.4,
-        "affordability_shortfall_rate": 0.48,
+        "affordability_shortfall_rate": 0.0714,
         "female_ready_rate_before": 0.0476,
         "female_ready_rate_after": 0.0952
       },
       {
         "seed": 43,
-        "forecaster_wape": 0.56,
+        "forecaster_wape": 0.4689,
         "naive_wape": 0.7253,
         "ready_shortfall_rate": 0.375,
         "not_yet_shortfall_rate": 0.5238,
         "timing_avoided_pct": 50.9,
-        "affordability_shortfall_rate": 0.4667,
+        "affordability_shortfall_rate": 0.2143,
         "female_ready_rate_before": 0.1667,
         "female_ready_rate_after": 0.1667
       },
       {
         "seed": 44,
-        "forecaster_wape": 0.5538,
+        "forecaster_wape": 0.482,
         "naive_wape": 0.789,
         "ready_shortfall_rate": 0.75,
         "not_yet_shortfall_rate": 0.5435,
         "timing_avoided_pct": 62.1,
-        "affordability_shortfall_rate": 0.4286,
+        "affordability_shortfall_rate": 0.1111,
         "female_ready_rate_before": 0.0,
         "female_ready_rate_after": 0.0
       },
       {
         "seed": 45,
-        "forecaster_wape": 0.5253,
+        "forecaster_wape": 0.4589,
         "naive_wape": 0.6319,
         "ready_shortfall_rate": 0.5714,
         "not_yet_shortfall_rate": 0.5581,
         "timing_avoided_pct": 51.7,
-        "affordability_shortfall_rate": 0.4615,
+        "affordability_shortfall_rate": 0.1875,
         "female_ready_rate_before": 0.0,
         "female_ready_rate_after": 0.1111
       },
       {
         "seed": 46,
-        "forecaster_wape": 0.5335,
+        "forecaster_wape": 0.4675,
         "naive_wape": 0.6986,
         "ready_shortfall_rate": 0.5,
         "not_yet_shortfall_rate": 0.6304,
         "timing_avoided_pct": 65.6,
-        "affordability_shortfall_rate": 0.45,
+        "affordability_shortfall_rate": 0.3158,
         "female_ready_rate_before": 0.125,
         "female_ready_rate_after": 0.125
       }
     ],
     "summary": {
       "forecaster_wape": {
-        "mean": 0.5502,
-        "std": 0.0212,
-        "min": 0.5253,
-        "max": 0.5783
+        "mean": 0.4738,
+        "std": 0.0129,
+        "min": 0.4589,
+        "max": 0.4915
       },
       "naive_wape": {
         "mean": 0.7097,
@@ -267,10 +306,10 @@
         "max": 65.6
       },
       "affordability_shortfall_rate": {
-        "mean": 0.4574,
-        "std": 0.0194,
-        "min": 0.4286,
-        "max": 0.48
+        "mean": 0.18,
+        "std": 0.0952,
+        "min": 0.0714,
+        "max": 0.3158
       },
       "female_ready_rate_before": {
         "mean": 0.0679,

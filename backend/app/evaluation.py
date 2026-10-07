@@ -18,11 +18,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 import numpy as np
 import pandas as pd
+
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 from app.config import Config, get_config
 from app.data.generator import generate_dataset
@@ -32,7 +39,7 @@ from app.engines.ready import ReadyEngine
 from app.engines.timing import TimingEngine
 from app.fairness.module import FairnessModule
 from app.features.builder import build_features
-from app.ml.forecaster import CashFlowForecaster, NaiveForecaster
+from app.ml.forecaster import CashFlowForecaster, NaiveForecaster, SeasonalNaiveForecaster
 from app.ml.model_store import load_model, get_model_version, get_data_as_of
 
 DISCLAIMER_LABEL = "synthetic data, relative comparison"
@@ -104,14 +111,18 @@ def evaluate_forecast_performance(
             forecaster.fit(train_feats, train_feats["weekly_inflow"], train_feats["weekly_outflow"])
 
     naive = NaiveForecaster()
+    s_naive = SeasonalNaiveForecaster(seasonal_lag=4)
 
     preds = forecaster.predict(test_eval)
     naive_preds = naive.predict(test_eval)
+    s_naive_preds = s_naive.predict(test_eval)
 
     test_eval["pred_in"] = preds["predicted_inflow"].to_numpy()
     test_eval["pred_out"] = preds["predicted_outflow"].to_numpy()
     test_eval["naive_pred_in"] = naive_preds["predicted_inflow"].to_numpy()
     test_eval["naive_pred_out"] = naive_preds["predicted_outflow"].to_numpy()
+    test_eval["s_naive_pred_in"] = s_naive_preds["predicted_inflow"].to_numpy()
+    test_eval["s_naive_pred_out"] = s_naive_preds["predicted_outflow"].to_numpy()
 
     # Overall metrics
     total_vol = test_eval["weekly_inflow"] + test_eval["weekly_outflow"]
@@ -122,12 +133,19 @@ def evaluate_forecast_performance(
     err_naive = np.abs(test_eval["weekly_inflow"] - test_eval["naive_pred_in"]) + np.abs(
         test_eval["weekly_outflow"] - test_eval["naive_pred_out"]
     )
+    err_s_naive = np.abs(test_eval["weekly_inflow"] - test_eval["s_naive_pred_in"]) + np.abs(
+        test_eval["weekly_outflow"] - test_eval["s_naive_pred_out"]
+    )
 
     overall_mae = round(float(np.mean(err_forecaster) / 2.0), 2)
     overall_wape = round(float(np.sum(err_forecaster) / max(1.0, sum_vol)), 4)
     naive_mae = round(float(np.mean(err_naive) / 2.0), 2)
     naive_wape = round(float(np.sum(err_naive) / max(1.0, sum_vol)), 4)
-    wape_improvement = round(float((naive_wape - overall_wape) / max(0.0001, naive_wape)), 4)
+    s_naive_mae = round(float(np.mean(err_s_naive) / 2.0), 2)
+    s_naive_wape = round(float(np.sum(err_s_naive) / max(1.0, sum_vol)), 4)
+    stronger_naive_mae = min(naive_mae, s_naive_mae)
+    stronger_naive_wape = min(naive_wape, s_naive_wape)
+    wape_improvement = round(float((stronger_naive_wape - overall_wape) / max(0.0001, stronger_naive_wape)), 4)
 
     # By Persona Breakdown
     personas = [
@@ -137,6 +155,7 @@ def evaluate_forecast_performance(
         "woman_led_household",
         "salaried_user",
     ]
+    cfg = get_config()
     by_persona = {}
     for p in personas:
         p_df = test_eval[test_eval["persona"] == p]
@@ -149,18 +168,40 @@ def evaluate_forecast_performance(
             p_naive_err = np.abs(p_df["weekly_inflow"] - p_df["naive_pred_in"]) + np.abs(
                 p_df["weekly_outflow"] - p_df["naive_pred_out"]
             )
+            p_s_naive_err = np.abs(p_df["weekly_inflow"] - p_df["s_naive_pred_in"]) + np.abs(
+                p_df["weekly_outflow"] - p_df["s_naive_pred_out"]
+            )
 
             p_mae = round(float(np.mean(p_err) / 2.0), 2)
             p_wape = round(float(np.sum(p_err) / max(1.0, p_vol)), 4)
             p_naive_mae = round(float(np.mean(p_naive_err) / 2.0), 2)
             p_naive_wape = round(float(np.sum(p_naive_err) / max(1.0, p_vol)), 4)
+            p_s_naive_mae = round(float(np.mean(p_s_naive_err) / 2.0), 2)
+            p_s_naive_wape = round(float(np.sum(p_s_naive_err) / max(1.0, p_vol)), 4)
+
+            p_stronger_mae = min(p_naive_mae, p_s_naive_mae)
+            p_stronger_wape = min(p_naive_wape, p_s_naive_wape)
+
+            p_low_conf = bool((p_mae > p_stronger_mae) or (p_wape > p_stronger_wape))
+            p_tier = cfg.persona_tiers.get(p, "primary")
+
+            p_mae_edge = round(float((p_stronger_mae - p_mae) / max(0.0001, p_stronger_mae)) * 100, 1)
+            p_wape_gain = round(float((p_stronger_wape - p_wape) / max(0.0001, p_stronger_wape)) * 100, 1)
+
             by_persona[p] = {
                 "customers": count,
                 "forecaster_mae": p_mae,
                 "forecaster_wape": p_wape,
                 "naive_mae": p_naive_mae,
                 "naive_wape": p_naive_wape,
-                "wape_reduction_pct": round(float((p_naive_wape - p_wape) / max(0.0001, p_naive_wape)) * 100, 1),
+                "seasonal_naive_mae": p_s_naive_mae,
+                "seasonal_naive_wape": p_s_naive_wape,
+                "stronger_naive_mae": p_stronger_mae,
+                "stronger_naive_wape": p_stronger_wape,
+                "mae_edge_pct": p_mae_edge,
+                "wape_reduction_pct": p_wape_gain,
+                "low_confidence": p_low_conf,
+                "persona_tier": p_tier,
             }
 
     # Irregular / seasonal personas evaluation
@@ -191,6 +232,10 @@ def evaluate_forecast_performance(
             "forecaster_wape": overall_wape,
             "naive_mae": naive_mae,
             "naive_wape": naive_wape,
+            "seasonal_naive_mae": s_naive_mae,
+            "seasonal_naive_wape": s_naive_wape,
+            "stronger_naive_mae": stronger_naive_mae,
+            "stronger_naive_wape": stronger_naive_wape,
             "wape_reduction_pct": round(wape_improvement * 100, 1),
         },
         "by_persona": by_persona,
@@ -585,26 +630,37 @@ def print_report_tables(
     # 1. Forecast Table
     f_rows = []
     for p, stats in forecast.get("by_persona", {}).items():
+        tier = stats.get("persona_tier", "").replace("_", " ").title()
+        conf = "Low Confidence" if stats.get("low_confidence") else "OK"
         f_rows.append([
             p,
+            tier,
             stats["customers"],
             f"৳{stats['forecaster_mae']:.0f}",
             f"{stats['forecaster_wape'] * 100:.1f}%",
-            f"৳{stats['naive_mae']:.0f}",
-            f"{stats['naive_wape'] * 100:.1f}%",
-            f"{stats['wape_reduction_pct']:+.1f}%",
+            f"৳{stats.get('stronger_naive_mae', stats.get('naive_mae', 0)):.0f}",
+            f"{stats.get('stronger_naive_wape', stats.get('naive_wape', 0)) * 100:.1f}%",
+            f"{stats.get('mae_edge_pct', 0):+.1f}%",
+            f"{stats.get('wape_reduction_pct', 0):+.1f}%",
+            conf,
         ])
     ov = forecast.get("overall", {})
+    ov_stronger_mae = ov.get("stronger_naive_mae", ov.get("naive_mae", 0))
+    ov_stronger_wape = ov.get("stronger_naive_wape", ov.get("naive_wape", 0))
+    ov_mae_edge = ((ov_stronger_mae - ov.get("forecaster_mae", 0)) / max(0.0001, ov_stronger_mae)) * 100
     f_rows.append([
         "OVERALL",
+        "—",
         sum(s["customers"] for s in forecast.get("by_persona", {}).values()),
         f"৳{ov.get('forecaster_mae', 0):.0f}",
         f"{ov.get('forecaster_wape', 0) * 100:.1f}%",
-        f"৳{ov.get('naive_mae', 0):.0f}",
-        f"{ov.get('naive_wape', 0) * 100:.1f}%",
+        f"৳{ov_stronger_mae:.0f}",
+        f"{ov_stronger_wape * 100:.1f}%",
+        f"{ov_mae_edge:+.1f}%",
         f"{ov.get('wape_reduction_pct', 0):+.1f}%",
+        "OK",
     ])
-    f_headers = ["Persona", "N", "LGBM MAE", "LGBM WAPE", "Naive MAE", "Naive WAPE", "WAPE Gain"]
+    f_headers = ["Persona", "Tier", "N", "LGBM MAE", "LGBM WAPE", "Naive MAE", "Naive WAPE", "MAE Edge", "WAPE Gain", "Status"]
     print(format_table(f_headers, f_rows, "PILLAR 1: FORECAST PERFORMANCE VS NAIVE BASELINE"))
 
     # Irregular / seasonal callout

@@ -1,6 +1,7 @@
 """Pydantic schemas for API requests and responses (B13)."""
 from __future__ import annotations
-from pydantic import BaseModel, Field
+from typing import Literal
+from pydantic import BaseModel, Field, model_validator
 
 
 class Meta(BaseModel):
@@ -35,12 +36,29 @@ class SafeRangeResponse(BaseModel):
     stressed_high: float
     basis_months: int
     basis_sentence: str
+    low_confidence: bool = False
     meta: Meta
+
+
+FinancingStructure = Literal["conventional", "fixed_payment", "interest_free"]
 
 
 class LoanCheckRequest(BaseModel):
     amount: float = Field(gt=0)
     tenor_months: int = Field(gt=0, le=36)
+    # Used only for this calculation; never stored on the profile or used as a model feature.
+    financing_structure: FinancingStructure = "conventional"
+    total_repayment: float | None = Field(default=None, gt=0)  # fixed_payment only
+    provider_fees: float = Field(default=0.0, ge=0)  # interest_free only
+
+    @model_validator(mode="after")
+    def _check_structure_inputs(self) -> "LoanCheckRequest":
+        if self.financing_structure == "fixed_payment":
+            if self.total_repayment is None:
+                raise ValueError("total_repayment is required for fixed_payment.")
+            if self.total_repayment < self.amount:
+                raise ValueError("total_repayment must be greater than or equal to amount.")
+        return self
 
 
 class NearestComfortable(BaseModel):
@@ -53,8 +71,10 @@ class LoanCheckResponse(BaseModel):
     customer_id: str
     amount: float
     tenor_months: int
+    financing_structure: FinancingStructure = "conventional"
     monthly_payment: float
     total_repayment: float
+    extra_cost: float = 0.0
     surplus_share: float
     verdict: str  # "Comfortable", "Tight", "Too much"
     verdict_reason: str
@@ -85,6 +105,7 @@ class CalendarResponse(BaseModel):
     recommended_window: str
     avoid_weeks: list[str]
     heads_up: HeadsUpCard | None = None
+    low_confidence: bool = False
     meta: Meta
 
 

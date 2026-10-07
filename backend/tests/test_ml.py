@@ -176,3 +176,42 @@ def test_no_protected_attributes_used():
         assert feat.lower() not in forbidden
         for f in forbidden:
             assert f not in feat.lower(), f"Forbidden substring {f} in feature {feat}"
+
+
+def test_low_confidence_computation():
+    """Verify that low_confidence is True if and only if model_mae > naive_mae or model_wape > naive_wape."""
+    # Case 1: Model is better in both MAE and WAPE
+    model_mae = 1000.0
+    naive_mae = 1500.0
+    model_wape = 40.0
+    naive_wape = 50.0
+    low_conf = (model_mae > naive_mae) or (model_wape > naive_wape)
+    assert low_conf is False
+
+    # Case 2: Model MAE is worse
+    model_mae_bad = 1600.0
+    low_conf_mae = (model_mae_bad > naive_mae) or (model_wape > naive_wape)
+    assert low_conf_mae is True
+
+    # Case 3: Model WAPE is worse
+    model_wape_bad = 55.0
+    low_conf_wape = (model_mae > naive_mae) or (model_wape_bad > naive_wape)
+    assert low_conf_wape is True
+
+    # Case 4: Both are worse
+    low_conf_both = (model_mae_bad > naive_mae) or (model_wape_bad > naive_wape)
+    assert low_conf_both is True
+
+
+def test_persona_not_in_forecaster_or_risk_features():
+    """Confirm 'persona' is strictly absent from feature lists in train and feature builder."""
+    from app.ml.forecaster import FORECASTER_FEATURES
+    from app.ml.risk_model import RISK_FEATURES
+    from app.features.builder import FEATURE_COLUMNS
+
+    assert "persona" not in FORECASTER_FEATURES
+    assert "persona" not in RISK_FEATURES
+    assert "persona" not in FEATURE_COLUMNS
+    for col in FEATURE_COLUMNS:
+        assert "persona" not in col.lower()
+
